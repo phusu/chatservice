@@ -8,6 +8,11 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * ChatServer represents our server. It holds all the different chat rooms
+ * and users. It contains the application main method, which will create
+ * the server and start listening the specified port for incoming client connections.
+ */
 public class ChatServer {
 	private Set<ChatRoom> chatRooms;
 	private Set<ChatUser> users;

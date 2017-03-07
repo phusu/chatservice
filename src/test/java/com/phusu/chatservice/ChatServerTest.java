@@ -7,6 +7,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+/**
+ * Unit tests for ChatServer.
+ */
 public class ChatServerTest {
 
 	private static final String USER_NAME_FOO = "foo";

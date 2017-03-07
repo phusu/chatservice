@@ -1,10 +1,14 @@
 package com.phusu.chatservice;
 
+/**
+ * Enumeration of different recognized message types from client to server.
+ */
 enum MessageType {
 	MESSAGE_TO("MESSAGE TO"),
 	COMMAND_SETNAME("COMMAND SETNAME"),
 	COMMAND_JOIN("COMMAND JOIN"),
-	COMMAND_LEAVE("COMMAND LEAVE");
+	COMMAND_LEAVE("COMMAND LEAVE"),
+	COMMAND_LISTROOMS("COMMAND LISTROOMS");
 	
 	private final String messageTypeAsString;
 	

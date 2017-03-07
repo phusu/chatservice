@@ -6,6 +6,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+/**
+ * Unit tests for ChatMessageParser.
+ */
 public class ChatMessageParserTest {
 	
 	private final static String DESTINATION = "testroom";
@@ -101,7 +104,6 @@ public class ChatMessageParserTest {
 		ChatMessageParser.parseLine(MessageType.COMMAND_JOIN.getMessageTypeAsString()  + " ");
 	}
 
-
 	@Test
 	public void ChatMessageParserParseLeaveRoomTest() {
 		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_LEAVE.getMessageTypeAsString()  + " " + DESTINATION);
@@ -118,5 +120,14 @@ public class ChatMessageParserTest {
 		exception.expect(IllegalArgumentException.class);
 		exception.expectMessage("Missing arguments.");
 		ChatMessageParser.parseLine(MessageType.COMMAND_LEAVE.getMessageTypeAsString()  + " ");
+	}
+
+	@Test
+	public void ChatMessageParserParseListRoomsTest() {
+		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_LISTROOMS.getMessageTypeAsString());
+		assertTrue(message instanceof CommandMessage);
+		CommandMessage msg = (CommandMessage) message;
+		assertTrue("Expected " + MessageType.COMMAND_LISTROOMS + ", was " + msg.getMessageType(), 
+				msg.getMessageType().equals(MessageType.COMMAND_LISTROOMS));
 	}
 }

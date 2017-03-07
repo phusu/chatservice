@@ -1,12 +1,14 @@
 package com.phusu.chatservice;
 
 /**
- * Supported commands
+ * ChatMessageParser parses incoming messages from client.
+ * 
+ * Supported commands:
  * MESSAGE TO roomname message
  * COMMAND SETNAME name
  * COMMAND JOIN roomname
  * COMMAND LEAVE roomname
- *
+ * COMMAND LISTROOMS
  */
 public class ChatMessageParser {
 	public static ChatMessage parseLine(String line) {
@@ -24,6 +26,9 @@ public class ChatMessageParser {
 		}
 		else if (line.startsWith(MessageType.COMMAND_LEAVE.getMessageTypeAsString())) {
 			return parseCommandMessage(MessageType.COMMAND_LEAVE, line);
+		}
+		else if (line.startsWith(MessageType.COMMAND_LISTROOMS.getMessageTypeAsString())) {
+			return parseCommandMessage(MessageType.COMMAND_LISTROOMS, line);
 		}
 		
 		throw new IllegalArgumentException("Unknown command.");
@@ -55,7 +60,12 @@ public class ChatMessageParser {
 	}
 
 	private static ChatMessage parseCommandMessage(MessageType type, String line) {
-		return new CommandMessage(type, parseArguments(type, line));
+		if (type == MessageType.COMMAND_LISTROOMS) {
+			return new CommandMessage(MessageType.COMMAND_LISTROOMS);
+		}
+		else {
+			return new CommandMessage(type, parseArguments(type, line));
+		}
 	}
 
 	private static String parseArguments(MessageType type, String line) {

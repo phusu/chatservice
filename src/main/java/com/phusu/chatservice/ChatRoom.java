@@ -3,6 +3,9 @@ package com.phusu.chatservice;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * ChatRoom implements a chat room. 
+ */
 public class ChatRoom {
 	private String name;
 	private ChatRoomType type;

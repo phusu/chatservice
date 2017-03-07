@@ -1,5 +1,8 @@
 package com.phusu.chatservice;
 
+/**
+ * ChatMessage is an abstract base class for different types of chat messages.
+ */
 public abstract class ChatMessage {
 	
 	private ChatUser author;

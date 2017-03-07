@@ -10,6 +10,10 @@ import java.net.Socket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * ConnectionHandler class is a Thread-based implementation of handling
+ * a single client-server connection.
+ */
 public class ConnectionHandler extends Thread {
 
 	private static final String SUBMITNAME = "SUBMITNAME";

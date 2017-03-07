@@ -7,6 +7,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+/**
+ * Unit tests for ChatRoom.
+ */
 public class ChatRoomTest {
 	
 	public static final String NAME = "general";
