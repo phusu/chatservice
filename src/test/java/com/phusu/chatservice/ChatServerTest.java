@@ -9,6 +9,8 @@ import org.junit.rules.ExpectedException;
 
 public class ChatServerTest {
 
+	private static final String USER_NAME_FOO = "foo";
+	
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
 	
@@ -60,7 +62,19 @@ public class ChatServerTest {
 	@Test
 	public void ChatServerAddUserTest() {
 		ChatServer server = new ChatServer();
-		server.addUser(createNiceMock(ChatUser.class));
+		server.addUserIfUnique(createNiceMock(ChatUser.class));
+		assertTrue(server.listUsers().size() == 1);
+	}
+	
+	@Test
+	public void ChatServerAddUserDuplicateTest() {
+		ChatServer server = new ChatServer();
+		ChatUser user = new SimpleChatUser(USER_NAME_FOO);
+		ChatUser user2 = new SimpleChatUser(USER_NAME_FOO);
+		assertTrue(user.equals(user2));
+		assertTrue(server.addUserIfUnique(user));
+		assertTrue(server.listUsers().size() == 1);
+		assertFalse(server.addUserIfUnique(user2));
 		assertTrue(server.listUsers().size() == 1);
 	}
 	
@@ -68,7 +82,7 @@ public class ChatServerTest {
 	public void ChatServerDeleteUserTest() {
 		ChatServer server = new ChatServer();
 		ChatUser user = createNiceMock(ChatUser.class);
-		server.addUser(user);
+		server.addUserIfUnique(user);
 		assertTrue(server.listUsers().size() == 1);
 		server.deleteUser(user);
 		assertTrue(server.listUsers().size() == 0);
@@ -79,7 +93,7 @@ public class ChatServerTest {
 		ChatServer server = new ChatServer();
 		exception.expect(NullPointerException.class);
 		exception.expectMessage("User was null.");
-		server.addUser(null);
+		server.addUserIfUnique(null);
 	}
 
 	@Test

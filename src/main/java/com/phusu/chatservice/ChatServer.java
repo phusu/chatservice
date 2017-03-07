@@ -1,11 +1,20 @@
 package com.phusu.chatservice;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ChatServer {
 	private Set<ChatRoom> chatRooms;
 	private Set<ChatUser> users;
+	
+	private static final Logger logger = LogManager.getLogger(ChatServer.class);
+	
+	private final static int PORT = 9001;
 	
 	public ChatServer() {
 		this.chatRooms = new HashSet<ChatRoom>();
@@ -37,27 +46,45 @@ public class ChatServer {
 	public Set<ChatUser> listUsers() {
 		return users;
 	}
-
-	public void addUser(ChatUser user) {
+	
+	public boolean addUserIfUnique(ChatUser user) {
 		if (user == null)
 			throw new NullPointerException("User was null.");
 		
-		boolean isUnique = users.add(user);
-		if (!isUnique)
-			throw new IllegalArgumentException("User already exists.");
+		synchronized (users) {
+			return users.add(user);	
+		}
 	}
 
 	public void deleteUser(ChatUser user) {
 		if (user == null)
 			throw new NullPointerException("User was null.");
 		
-		boolean isInTheSet = users.remove(user);
+		boolean isInTheSet = false;
+		
+		synchronized (users) {
+			isInTheSet = users.remove(user);
+		}
+		
 		if (!isInTheSet)
 			throw new IllegalArgumentException("User doesn't exist.");
 	}
 	
 	public static void main(String[] args) {
+		ChatServer server = new ChatServer();
+		logger.trace("ChatServer started");
 		
+		try (ServerSocket listener = new ServerSocket(PORT)) {
+			while (true) {
+				new ConnectionHandler(listener.accept(), server).start();
+			}
+		} 
+		catch (IOException e) {
+			logger.catching(e);
+		}
+		finally {
+			logger.trace("ChatServer stopping");
+		}
 	}
 	
 }

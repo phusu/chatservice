@@ -17,7 +17,7 @@ public abstract class ChatMessage {
 		if (author == null)
 			throw new NullPointerException("Author was null.");
 		
-		this.setAuthor(author);
+		this.author = author;
 	}
 	
 	public MessageType getMessageType() {
