@@ -17,6 +17,7 @@ public class ClientConnection extends Thread {
 	private Socket socket;
 	private ChatServer server;
 	private ChatUser user;
+	private boolean closed = false;
 
 	private static final Logger logger = LogManager.getLogger(ClientConnection.class);
 	private ProtocolHandler handler;
@@ -89,14 +90,17 @@ public class ClientConnection extends Thread {
 	}
 
 	private void closeConnection() {
-		logger.trace("Closing connection");
-		server.removeConnection(this);
-		
-		try {
-			socket.close();
-		}
-		catch (IOException e) {
-			logger.catching(e);
+		if (!closed) {
+			logger.trace("Closing connection");
+			server.removeConnection(this);
+			
+			try {
+				socket.close();
+				closed = true;
+			}
+			catch (IOException e) {
+				logger.catching(e);
+			}	
 		}
 	}
 }
