@@ -56,23 +56,17 @@ public class ChatRoom {
 		return users;
 	}
 	
-	public void addUser(ChatUser user) {
+	public boolean addUserIfUnique(ChatUser user) {
 		if (user == null)
 			throw new NullPointerException("User was null.");
 		
-		boolean isUnique = users.add(user);
-		if (!isUnique) {
-			throw new IllegalArgumentException("User already exists.");
-		}
+		return users.add(user);
 	}
 	
-	public void deleteUser(ChatUser user) {
+	public boolean removeUserIfExists(ChatUser user) {
 		if (user == null)
 			throw new NullPointerException("User was null.");
 		
-		boolean isInTheSet = users.remove(user);
-		if (!isInTheSet) {
-			throw new IllegalArgumentException("User doesn't exist.");
-		}
+		return users.remove(user);
 	}
 }

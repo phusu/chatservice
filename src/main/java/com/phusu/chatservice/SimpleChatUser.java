@@ -7,7 +7,8 @@ public class SimpleChatUser extends ChatUser {
 	
 	private String userName;
 	
-	public SimpleChatUser(String userName) {
+	public SimpleChatUser(ClientConnection clientConnection, String userName) {
+		super(clientConnection);
 		this.userName = userName;
 	}
 

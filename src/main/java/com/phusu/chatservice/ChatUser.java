@@ -6,7 +6,19 @@ package com.phusu.chatservice;
  * a user which is authenticated against Facebook.
  */
 public abstract class ChatUser {
+	
+	private ClientConnection clientConnection;
+	
+	public ChatUser(ClientConnection clientConnection) {
+		this.clientConnection = clientConnection;
+	}
+	
 	public abstract String getName();
+	
+	public ClientConnection getClientConnection() {
+		return this.clientConnection;
+	}
+	
 	
 	@Override
 	public boolean equals(Object obj) {

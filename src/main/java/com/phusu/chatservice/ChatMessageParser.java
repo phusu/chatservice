@@ -9,6 +9,7 @@ package com.phusu.chatservice;
  * COMMAND JOIN roomname
  * COMMAND LEAVE roomname
  * COMMAND LISTROOMS
+ * COMMAND QUIT
  */
 public class ChatMessageParser {
 	public static ChatMessage parseLine(String line) {
@@ -29,6 +30,9 @@ public class ChatMessageParser {
 		}
 		else if (line.startsWith(MessageType.COMMAND_LISTROOMS.getMessageTypeAsString())) {
 			return parseCommandMessage(MessageType.COMMAND_LISTROOMS, line);
+		}
+		else if (line.startsWith(MessageType.COMMAND_QUIT.getMessageTypeAsString())) {
+			return parseCommandMessage(MessageType.COMMAND_QUIT, line);
 		}
 		
 		throw new IllegalArgumentException("Unknown command.");
@@ -62,6 +66,9 @@ public class ChatMessageParser {
 	private static ChatMessage parseCommandMessage(MessageType type, String line) {
 		if (type == MessageType.COMMAND_LISTROOMS) {
 			return new CommandMessage(MessageType.COMMAND_LISTROOMS);
+		}
+		else if (type == MessageType.COMMAND_QUIT) {
+			return new CommandMessage(MessageType.COMMAND_QUIT);
 		}
 		else {
 			return new CommandMessage(type, parseArguments(type, line));

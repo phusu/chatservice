@@ -1,7 +1,7 @@
 package com.phusu.chatservice;
 
-import static org.easymock.EasyMock.createNiceMock;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -56,8 +56,8 @@ public class ChatRoomTest {
 	@Test
 	public void ChatRoomAddUserTest() {
 		ChatRoom room = new ChatRoom(NAME, ChatRoomType.PUBLIC);
-		ChatUser user = createNiceMock(ChatUser.class);
-		room.addUser(user);
+		ChatUser user = mock(ChatUser.class);
+		assertTrue(room.addUserIfUnique(user));
 		assertTrue(room.getUsers().size() == 1);
 	}
 	
@@ -66,27 +66,25 @@ public class ChatRoomTest {
 		ChatRoom room = new ChatRoom(NAME, ChatRoomType.PUBLIC);
 		exception.expect(NullPointerException.class);
 		exception.expectMessage("User was null.");
-		room.addUser(null);
+		room.addUserIfUnique(null);
 	}
 	
 
 	@Test
 	public void ChatRoomAddUserDuplicateTest() {
 		ChatRoom room = new ChatRoom(NAME, ChatRoomType.PUBLIC);
-		ChatUser user = createNiceMock(ChatUser.class);
-		room.addUser(user);
-		exception.expect(IllegalArgumentException.class);
-		exception.expectMessage("User already exists.");
-		room.addUser(user);
+		ChatUser user = mock(ChatUser.class);
+		assertTrue(room.addUserIfUnique(user));
+		assertFalse(room.addUserIfUnique(user));
 	}
 	
 	@Test
 	public void ChatRoomDeleteUserTest() {
 		ChatRoom room = new ChatRoom(NAME, ChatRoomType.PUBLIC);
-		ChatUser user = createNiceMock(ChatUser.class);
-		room.addUser(user);
+		ChatUser user = mock(ChatUser.class);
+		assertTrue(room.addUserIfUnique(user));
 		assertTrue(room.getUsers().size() == 1);
-		room.deleteUser(user);
+		assertTrue(room.removeUserIfExists(user));
 		assertTrue(room.getUsers().size() == 0);
 	}
 
@@ -95,16 +93,14 @@ public class ChatRoomTest {
 		ChatRoom room = new ChatRoom(NAME, ChatRoomType.PUBLIC);
 		exception.expect(NullPointerException.class);
 		exception.expectMessage("User was null.");
-		room.deleteUser(null);
+		room.removeUserIfExists(null);
 	}
 
 	@Test
 	public void ChatRoomDeleteUserNotExistsTest() {
 		ChatRoom room = new ChatRoom(NAME, ChatRoomType.PUBLIC);
-		ChatUser user = createNiceMock(ChatUser.class);
-		exception.expect(IllegalArgumentException.class);
-		exception.expectMessage("User doesn't exist.");
-		room.deleteUser(user);
+		ChatUser user = mock(ChatUser.class);
+		assertFalse(room.removeUserIfExists(user));
 	}
 	
 	@Test
