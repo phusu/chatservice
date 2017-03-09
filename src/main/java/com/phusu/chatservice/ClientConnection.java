@@ -17,10 +17,10 @@ public class ClientConnection extends Thread {
 	private Socket socket;
 	private ChatServer server;
 	private ChatUser user;
-	private boolean closed = false;
+	private boolean connectionClosed = false;
+	private ProtocolHandler handler;
 
 	private static final Logger logger = LogManager.getLogger(ClientConnection.class);
-	private ProtocolHandler handler;
 	
 	public ClientConnection(Socket socket, ChatServer server) {
 		this.socket = socket;
@@ -35,43 +35,9 @@ public class ClientConnection extends Thread {
 			
 			handler = new ProtocolHandler(input, output);
 			
-			boolean userNameIsUnique = false;
-			while (!userNameIsUnique) {
-				// Get username from client
-				handler.sendLine("SUBMITNAME");
-				ChatMessage message = handler.getMessage();
-				if (message.getMessageType() == MessageType.COMMAND_SETNAME) {
-					// Check from server if it already exists
-					CommandMessage commandMessage = (CommandMessage) message;
-					user = new SimpleChatUser(this, commandMessage.getArguments());
-					userNameIsUnique = server.addUserIfUnique(user);	
-				}
-			}
+			getUserName();
 			
-			handler.sendLine("SUBMITNAME OK");
-			
-			while (true) {
-				ChatMessage message = handler.getMessage();
-				
-				if (message.getMessageType() == MessageType.COMMAND_JOIN) {
-					handler.sendLine("NOT IMPLEMENTED");
-				}
-				else if (message.getMessageType() == MessageType.COMMAND_LEAVE) {
-					handler.sendLine("NOT IMPLEMENTED");
-				}
-				else if (message.getMessageType() == MessageType.COMMAND_LISTROOMS) {
-					handler.sendLine("NOT IMPLEMENTED");
-				}
-				else if (message.getMessageType() == MessageType.COMMAND_QUIT) {
-					server.removeUser(user);
-					closeConnection();
-					break;
-				}
-				else if (message.getMessageType() == MessageType.MESSAGE_TO) {
-					TextMessage textMessage = (TextMessage) message;
-					server.deliverMessage(textMessage.getChatRoomName(), textMessage.getMessage());
-				}
-			}
+			processMessages();
 			
 		}
 		catch (IOException e) {
@@ -84,19 +50,61 @@ public class ClientConnection extends Thread {
 			closeConnection();
 		}
 	}
+
+	private void processMessages() throws IOException {
+		while (true) {
+			ChatMessage message = handler.getMessage();
+			
+			if (message.getMessageType() == MessageType.COMMAND_JOIN) {
+				handler.sendLine("NOT IMPLEMENTED");
+			}
+			else if (message.getMessageType() == MessageType.COMMAND_LEAVE) {
+				handler.sendLine("NOT IMPLEMENTED");
+			}
+			else if (message.getMessageType() == MessageType.COMMAND_LISTROOMS) {
+				handler.sendLine("NOT IMPLEMENTED");
+			}
+			else if (message.getMessageType() == MessageType.COMMAND_QUIT) {
+				server.removeUser(user);
+				closeConnection();
+				break;
+			}
+			else if (message.getMessageType() == MessageType.MESSAGE_TO) {
+				TextMessage textMessage = (TextMessage) message;
+				server.deliverMessage(textMessage.getChatRoomName(), textMessage.getMessage());
+			}
+		}
+	}
+
+	private void getUserName() throws IOException {
+		boolean userNameIsUnique = false;
+		while (!userNameIsUnique) {
+			// Get username from client
+			handler.sendLine("SUBMITNAME");
+			ChatMessage message = handler.getMessage();
+			if (message.getMessageType() == MessageType.COMMAND_SETNAME) {
+				// Check from server if it already exists
+				CommandMessage commandMessage = (CommandMessage) message;
+				user = new SimpleChatUser(this, commandMessage.getArguments());
+				userNameIsUnique = server.addUserIfUnique(user);	
+			}
+		}
+		
+		handler.sendLine("SUBMITNAME OK");
+	}
 	
 	public void deliverMessage(String message) {
 		handler.sendLine(message);
 	}
 
 	private void closeConnection() {
-		if (!closed) {
+		if (!connectionClosed) {
 			logger.trace("Closing connection");
 			server.removeConnection(this);
 			
 			try {
 				socket.close();
-				closed = true;
+				connectionClosed = true;
 			}
 			catch (IOException e) {
 				logger.catching(e);

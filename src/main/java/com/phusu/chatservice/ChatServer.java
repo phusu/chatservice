@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,64 +37,72 @@ public class ChatServer {
 	}
 	
 	public Set<String> listPublicRoomNames() {
-		return publicRoomNames;
+		return Collections.unmodifiableSet(publicRoomNames);
 	}
 
-	public synchronized boolean addRoomIfUnique(ChatRoom room) {
+	public boolean addRoomIfUnique(ChatRoom room) {
 		if (room == null)
 			throw new NullPointerException("Room was null.");
 		
-		boolean roomExists = chatRooms.containsKey(room.getName());
-		if (!roomExists) {
-			chatRooms.put(room.getName(), room);
-		
-			if (room.getType() == ChatRoomType.PUBLIC) {
-				publicRoomNames.add(room.getName());
+		synchronized (chatRooms) {
+			boolean roomExists = chatRooms.containsKey(room.getName());
+			if (!roomExists) {
+				chatRooms.put(room.getName(), room);
+			
+				if (room.getType() == ChatRoomType.PUBLIC) {
+					synchronized (publicRoomNames) {
+						publicRoomNames.add(room.getName());	
+					}
+				}
 			}
+			
+			return roomExists;	
 		}
-		
-		return roomExists;
 	}
 
-	public synchronized boolean deleteRoomIfExists(ChatRoom room) {
+	public boolean deleteRoomIfExists(ChatRoom room) {
 		if (room == null)
 			throw new NullPointerException("Room was null.");
 		
-		boolean roomExists = chatRooms.containsKey(room.getName());
-		if (roomExists)
-		{
-			chatRooms.remove(room);
-			if (room.getType() == ChatRoomType.PUBLIC) {
-				publicRoomNames.remove(room.getName());
-			}	
+		synchronized (chatRooms) {
+			boolean roomExists = chatRooms.containsKey(room.getName());
+			if (roomExists) {
+				chatRooms.remove(room);
+				if (room.getType() == ChatRoomType.PUBLIC) {
+					synchronized (publicRoomNames) {
+						publicRoomNames.remove(room.getName());
+					}
+				}
+			}
+			return roomExists;
 		}
-		
-		return roomExists;
 	}
 	
 	public Set<ChatUser> listUsers() {
-		return users;
+		return Collections.unmodifiableSet(users);
 	}
 	
-	public synchronized boolean addUserIfUnique(ChatUser user) {
+	public boolean addUserIfUnique(ChatUser user) {
 		if (user == null)
 			throw new NullPointerException("User was null.");
 		
-		return users.add(user);	
+		synchronized (users) {
+			return users.add(user);
+		}	
 	}
 
-	public synchronized void removeUser(ChatUser user) {
+	public void removeUser(ChatUser user) {
 		if (user == null)
 			throw new NullPointerException("User was null.");
 		
-		boolean isInTheSet = users.remove(user);
-		
-		if (!isInTheSet) {
-			throw new IllegalArgumentException("User doesn't exist.");
-		}
-		else {
-			for (ChatRoom chatRoom : chatRooms.values()) {
-				chatRoom.removeUserIfExists(user);
+		synchronized (users) {
+			boolean isInTheSet = users.remove(user);
+			if (!isInTheSet) {
+				throw new IllegalArgumentException("User doesn't exist.");
+			} else {
+				for (ChatRoom chatRoom : chatRooms.values()) {
+					chatRoom.removeUserIfExists(user);
+				}
 			}
 		}
 	}
@@ -102,14 +111,18 @@ public class ChatServer {
 		if (connection == null)
 			throw new NullPointerException("Connection was null.");
 		
-		connections.add(connection);
+		synchronized (connections) {
+			connections.add(connection);
+		}
 	}
 	
 	public void removeConnection(ClientConnection connection) {
 		if (connection == null)
 			throw new NullPointerException("Connection was null.");		
 		
-		connections.remove(connection);
+		synchronized (connections) {
+			connections.remove(connection);
+		}
 	}
 	
 	public void deliverMessage(String chatRoomName, String message) {
