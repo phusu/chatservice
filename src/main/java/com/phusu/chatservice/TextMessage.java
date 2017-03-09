@@ -4,7 +4,7 @@ package com.phusu.chatservice;
  * TextMessage represents a simple text-based message from a single client
  * to a chat room.
  */
-public final class TextMessage extends ChatMessage {
+public class TextMessage extends ChatMessage {
 	
 	private String message;
 	private String chatRoomName;
