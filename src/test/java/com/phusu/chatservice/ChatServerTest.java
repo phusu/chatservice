@@ -176,6 +176,11 @@ public class ChatServerTest {
 		ChatServer server = new ChatServer();
 		ChatRoom room = mock(ChatRoom.class);
 		when(room.getName()).thenReturn("general");
+		when(room.getType()).thenReturn(ChatRoomType.PUBLIC);
 		server.addRoomIfUnique(room);
+		TextMessage message = mock(TextMessage.class);
+		when(message.getChatRoomName()).thenReturn("general");
+		when(message.getMessage()).thenReturn("test message");
+		assertTrue(server.deliverMessage(message));
 	}
 }

@@ -13,14 +13,13 @@ import org.apache.logging.log4j.Logger;
  * ClientConnection 
  */
 public class ClientConnection extends Thread {
+	private static final Logger logger = LogManager.getLogger(ClientConnection.class);
 	
 	private Socket socket;
 	private ChatServer server;
 	private ChatUser user;
-	private boolean connectionClosed = false;
 	private ProtocolHandler handler;
-
-	private static final Logger logger = LogManager.getLogger(ClientConnection.class);
+	private boolean connectionClosed = false;
 	
 	public ClientConnection(Socket socket, ChatServer server) {
 		this.socket = socket;
@@ -71,7 +70,7 @@ public class ClientConnection extends Thread {
 			}
 			else if (message.getMessageType() == MessageType.MESSAGE_TO) {
 				TextMessage textMessage = (TextMessage) message;
-				server.deliverMessage(textMessage.getChatRoomName(), textMessage.getMessage());
+				server.deliverMessage(textMessage);
 			}
 		}
 	}

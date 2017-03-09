@@ -78,7 +78,7 @@ public class ChatServer {
 			ChatRoomType roomType = room.getType();
 			boolean roomExists = chatRooms.containsKey(roomName);
 			if (roomExists) {
-				chatRooms.remove(room);
+				chatRooms.remove(roomName);
 				if (roomType == ChatRoomType.PUBLIC) {
 					synchronized (publicRoomNames) {
 						publicRoomNames.remove(roomName);
@@ -152,19 +152,23 @@ public class ChatServer {
 		}
 	}
 	
-	public void deliverMessage(String chatRoomName, String message) {
+	public boolean deliverMessage(TextMessage message) {
+		String chatRoomName = message.getChatRoomName();
+		String chatMessage = message.getMessage();
 		if (chatRooms.containsKey(chatRoomName)) {
 			Set<ChatUser> users = chatRooms.get(chatRoomName).getUsers();
 			for (ChatUser chatUser : users) {
-				chatUser.getClientConnection().deliverMessage(message);
+				chatUser.getClientConnection().deliverMessage(chatMessage);
 			}
 			
-			logger.trace("Delivered to: " + chatRoomName + ", message: " + message);
+			logger.trace("Delivered to: " + chatRoomName + ", message: " + chatMessage);
+			
+			return true;
 		}
+		return false;
 	}
 	
 	public void start() {
-
 		logger.trace("ChatServer started");
 		
 		try (ServerSocket listener = new ServerSocket(PORT)) {
