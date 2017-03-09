@@ -116,6 +116,12 @@ public class ChatRoomTest {
 		exception.expect(NullPointerException.class);
 		exception.expectMessage("Topic was null.");
 		room.setTopic(null);
-		
+	}
+	
+	@Test
+	public void ChatRoomEqualsTest() {
+		ChatRoom room1 = new ChatRoom(NAME, ChatRoomType.PUBLIC);
+		ChatRoom room2 = new ChatRoom(NAME, ChatRoomType.PUBLIC);
+		assertTrue(room1.equals(room2));
 	}
 }
