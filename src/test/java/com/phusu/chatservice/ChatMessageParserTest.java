@@ -6,6 +6,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.phusu.chatservice.messages.ChatMessage;
+import com.phusu.chatservice.messages.JoinRoomMessage;
+import com.phusu.chatservice.messages.LeaveRoomMessage;
+import com.phusu.chatservice.messages.ListRoomsMessage;
+import com.phusu.chatservice.messages.MessageType;
+import com.phusu.chatservice.messages.QuitMessage;
+import com.phusu.chatservice.messages.SetNameMessage;
+import com.phusu.chatservice.messages.TextMessage;
+
 /**
  * Unit tests for ChatMessageParser.
  */
@@ -71,12 +80,12 @@ public class ChatMessageParserTest {
 	public void ChatMessageParserParseSetNameTest() {
 		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_SETNAME.getMessageTypeAsString()  
 				+ " " + COMMAND_SETNAME_ARGUMENTS);
-		assertTrue(message instanceof CommandMessage);
-		CommandMessage msg = (CommandMessage) message;
+		assertTrue(message instanceof SetNameMessage);
+		SetNameMessage msg = (SetNameMessage) message;
 		assertTrue("Expected " + MessageType.COMMAND_SETNAME + ", was " + msg.getMessageType(), 
 				msg.getMessageType().equals(MessageType.COMMAND_SETNAME));
-		assertTrue("Expected " + COMMAND_SETNAME_ARGUMENTS + ", was " + msg.getArguments(), 
-				msg.getArguments().equals(COMMAND_SETNAME_ARGUMENTS));
+		assertTrue("Expected " + COMMAND_SETNAME_ARGUMENTS + ", was " + msg.getUserName(), 
+				msg.getUserName().equals(COMMAND_SETNAME_ARGUMENTS));
 	}
 
 	@Test
@@ -89,12 +98,12 @@ public class ChatMessageParserTest {
 	@Test
 	public void ChatMessageParserParseJoinRoomTest() {
 		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_JOIN.getMessageTypeAsString()  + " " + DESTINATION);
-		assertTrue(message instanceof CommandMessage);
-		CommandMessage msg = (CommandMessage) message;
+		assertTrue(message instanceof JoinRoomMessage);
+		JoinRoomMessage msg = (JoinRoomMessage) message;
 		assertTrue("Expected " + MessageType.COMMAND_JOIN + ", was " + msg.getMessageType(), 
 				msg.getMessageType().equals(MessageType.COMMAND_JOIN));
-		assertTrue("Expected " + DESTINATION + ", was " + msg.getArguments(), 
-				msg.getArguments().equals(DESTINATION));
+		assertTrue("Expected " + DESTINATION + ", was " + msg.getRoomName(), 
+				msg.getRoomName().equals(DESTINATION));
 	}
 
 	@Test
@@ -107,12 +116,12 @@ public class ChatMessageParserTest {
 	@Test
 	public void ChatMessageParserParseLeaveRoomTest() {
 		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_LEAVE.getMessageTypeAsString()  + " " + DESTINATION);
-		assertTrue(message instanceof CommandMessage);
-		CommandMessage msg = (CommandMessage) message;
+		assertTrue(message instanceof LeaveRoomMessage);
+		LeaveRoomMessage msg = (LeaveRoomMessage) message;
 		assertTrue("Expected " + MessageType.COMMAND_LEAVE + ", was " + msg.getMessageType(), 
 				msg.getMessageType().equals(MessageType.COMMAND_LEAVE));
-		assertTrue("Expected " + DESTINATION + ", was " + msg.getArguments(), 
-				msg.getArguments().equals(DESTINATION));
+		assertTrue("Expected " + DESTINATION + ", was " + msg.getRoomName(), 
+				msg.getRoomName().equals(DESTINATION));
 	}
 
 	@Test
@@ -125,9 +134,19 @@ public class ChatMessageParserTest {
 	@Test
 	public void ChatMessageParserParseListRoomsTest() {
 		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_LISTROOMS.getMessageTypeAsString());
-		assertTrue(message instanceof CommandMessage);
-		CommandMessage msg = (CommandMessage) message;
+		assertTrue(message instanceof ListRoomsMessage);
+		ListRoomsMessage msg = (ListRoomsMessage) message;
 		assertTrue("Expected " + MessageType.COMMAND_LISTROOMS + ", was " + msg.getMessageType(), 
 				msg.getMessageType().equals(MessageType.COMMAND_LISTROOMS));
+	}
+	
+
+	@Test
+	public void ChatMessageParserParseQuitTest() {
+		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_QUIT.getMessageTypeAsString());
+		assertTrue(message instanceof QuitMessage);
+		QuitMessage msg = (QuitMessage) message;
+		assertTrue("Expected " + MessageType.COMMAND_QUIT + ", was " + msg.getMessageType(), 
+				msg.getMessageType().equals(MessageType.COMMAND_QUIT));
 	}
 }

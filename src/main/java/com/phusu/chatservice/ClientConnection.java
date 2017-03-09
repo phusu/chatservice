@@ -9,6 +9,8 @@ import java.net.Socket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.phusu.chatservice.messages.ChatMessage;
+
 /**
  * ClientConnection 
  */
@@ -17,9 +19,9 @@ public class ClientConnection extends Thread {
 	
 	private Socket socket;
 	private ChatServer server;
-	private ChatUser user;
-	private ProtocolHandler handler;
+	private IOHandler handler;
 	private boolean connectionClosed = false;
+	private ChatUser user;
 	
 	public ClientConnection(Socket socket, ChatServer server) {
 		this.socket = socket;
@@ -32,10 +34,8 @@ public class ClientConnection extends Thread {
 			BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			PrintWriter output = new PrintWriter(socket.getOutputStream());
 			
-			handler = new ProtocolHandler(input, output);
-			
-			getUserName();
-			
+			handler = new IOHandler(input, output);
+			handler.sendLine("SUBMITNAME");			
 			processMessages();
 			
 		}
@@ -51,55 +51,24 @@ public class ClientConnection extends Thread {
 	}
 
 	private void processMessages() throws IOException {
-		while (true) {
+		while (!connectionClosed) {
 			ChatMessage message = handler.getMessage();
-			
-			if (message.getMessageType() == MessageType.COMMAND_JOIN) {
-				handler.sendLine("NOT IMPLEMENTED");
-			}
-			else if (message.getMessageType() == MessageType.COMMAND_LEAVE) {
-				handler.sendLine("NOT IMPLEMENTED");
-			}
-			else if (message.getMessageType() == MessageType.COMMAND_LISTROOMS) {
-				handler.sendLine("NOT IMPLEMENTED");
-			}
-			else if (message.getMessageType() == MessageType.COMMAND_QUIT) {
-				server.removeUser(user);
-				closeConnection();
-				break;
-			}
-			else if (message.getMessageType() == MessageType.MESSAGE_TO) {
-				TextMessage textMessage = (TextMessage) message;
-				server.deliverMessage(textMessage);
+			message.setClientConnection(this);
+			message.setAuthor(user);
+			String response = server.handleMessage(this, message);
+			if (!response.isEmpty()) {
+				handler.sendLine(response);
 			}
 		}
-	}
-
-	private void getUserName() throws IOException {
-		boolean userNameIsUnique = false;
-		while (!userNameIsUnique) {
-			// Get username from client
-			handler.sendLine("SUBMITNAME");
-			ChatMessage message = handler.getMessage();
-			if (message.getMessageType() == MessageType.COMMAND_SETNAME) {
-				// Check from server if it already exists
-				CommandMessage commandMessage = (CommandMessage) message;
-				user = new SimpleChatUser(this, commandMessage.getArguments());
-				userNameIsUnique = server.addUserIfUnique(user);	
-			}
-		}
-		
-		handler.sendLine("SUBMITNAME OK");
 	}
 	
 	public void deliverMessage(String message) {
 		handler.sendLine(message);
 	}
 
-	private void closeConnection() {
+	public void closeConnection() {
 		if (!connectionClosed) {
 			logger.trace("Closing connection");
-			server.removeConnection(this);
 			
 			try {
 				socket.close();
@@ -109,5 +78,9 @@ public class ClientConnection extends Thread {
 				logger.catching(e);
 			}	
 		}
+	}
+
+	public void setUser(ChatUser user) {
+		this.user = user;
 	}
 }

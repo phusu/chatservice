@@ -10,12 +10,15 @@ import java.io.StringWriter;
 
 import org.junit.Test;
 
+import com.phusu.chatservice.messages.ChatMessage;
+import com.phusu.chatservice.messages.SetNameMessage;
+
 public class ProtocolHandlerTest {
 
 	@Test
 	public void ProtocolHandlerSendLineTest() {
 		StringWriter sw = new StringWriter();
-		ProtocolHandler handler = new ProtocolHandler(null, new PrintWriter(sw));
+		IOHandler handler = new IOHandler(null, new PrintWriter(sw));
 		handler.sendLine("test line");
 		assertTrue(sw.toString().compareTo("test line\r\n") == 0);
 	}
@@ -25,9 +28,9 @@ public class ProtocolHandlerTest {
 		String line = "COMMAND SETNAME foo\r\n";
 		try {
 			BufferedReader input = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(line.getBytes("UTF-8"))));
-			ProtocolHandler handler = new ProtocolHandler(input, null);
+			IOHandler handler = new IOHandler(input, null);
 			ChatMessage message = handler.getMessage();
-			assertTrue(message.getMessageType() == MessageType.COMMAND_SETNAME);
+			assertTrue(message instanceof SetNameMessage);
 		}
 		catch (Exception e) {
 			e.printStackTrace();

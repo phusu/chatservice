@@ -1,4 +1,7 @@
-package com.phusu.chatservice;
+package com.phusu.chatservice.messages;
+
+import com.phusu.chatservice.ChatUser;
+import com.phusu.chatservice.ClientConnection;
 
 /**
  * ChatMessage is an abstract base class for different types of chat messages.
@@ -7,6 +10,7 @@ public abstract class ChatMessage {
 	
 	private ChatUser author;
 	private MessageType messageType;
+	private ClientConnection clientConnection;
 	
 	public ChatMessage(MessageType messageType) {
 		this.messageType = messageType;
@@ -17,13 +21,18 @@ public abstract class ChatMessage {
 	}
 	
 	public void setAuthor(ChatUser author){
-		if (author == null)
-			throw new NullPointerException("Author was null.");
-		
 		this.author = author;
 	}
 	
 	public MessageType getMessageType() {
 		return messageType;
+	}
+
+	public ClientConnection getClientConnection() {
+		return clientConnection;
+	}
+
+	public void setClientConnection(ClientConnection clientConnection) {
+		this.clientConnection = clientConnection;
 	}
 }

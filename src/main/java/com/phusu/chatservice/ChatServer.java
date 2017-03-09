@@ -14,6 +14,10 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.phusu.chatservice.messagehandlers.*;
+import com.phusu.chatservice.messages.ChatMessage;
+import com.phusu.chatservice.messages.TextMessage;
+
 /**
  * ChatServer represents our server. It holds all the different chat rooms
  * and users. It contains the application main method, which will create
@@ -24,6 +28,7 @@ public class ChatServer {
 	private Set<ChatUser> users;
 	private Collection<ClientConnection> connections;
 	private Set<String> publicRoomNames;
+	private Collection<IChatMessageHandler> messageHandlers;
 	
 	private static final Logger logger = LogManager.getLogger(ChatServer.class);
 	
@@ -35,22 +40,29 @@ public class ChatServer {
 		this.users = new HashSet<ChatUser>();
 		this.connections = new ArrayList<ClientConnection>();
 		this.publicRoomNames = new HashSet<String>();
+		this.messageHandlers = new ArrayList<IChatMessageHandler>();
+		this.messageHandlers.add(new TextMessageHandler(this));
+		this.messageHandlers.add(new QuitMessageHandler());
+		this.messageHandlers.add(new SetNameMessageHandler(this));
+		this.messageHandlers.add(new JoinRoomMessageHandler(this));
+		this.messageHandlers.add(new LeaveRoomMessageHandler(this));
+		this.messageHandlers.add(new ListRoomsMessageHandler());
 	}
 	
 	public Set<String> listPublicRoomNames() {
 		return Collections.unmodifiableSet(publicRoomNames);
 	}
 
-	public boolean addRoomIfUnique(ChatRoom room) {
-		if (room == null)
-			throw new NullPointerException("Room was null.");
+	public void createRoomIfUnique(String roomName, ChatRoomType roomType) {
+		if (roomName == null)
+			throw new NullPointerException("Room name was null.");
+		if (roomType == null)
+			throw new NullPointerException("Room type was null.");
 		
 		synchronized (chatRooms) {
-			String roomName = room.getName();
-			ChatRoomType roomType = room.getType();
 			boolean roomExists = chatRooms.containsKey(roomName);
 			if (!roomExists) {
-				chatRooms.put(roomName, room);
+				chatRooms.put(roomName, new ChatRoom(roomName, roomType));
 			
 				if (roomType == ChatRoomType.PUBLIC) {
 					synchronized (publicRoomNames) {
@@ -61,35 +73,34 @@ public class ChatServer {
 				logger.trace("Room " + roomName + " added.");
 				logger.trace(chatRooms);
 				logger.trace(publicRoomNames);
-				
-				return true;
 			}
-			
-			return false;	
 		}
 	}
 
-	public boolean deleteRoomIfExists(ChatRoom room) {
-		if (room == null)
+	public boolean deleteRoomIfEmpty(String roomName) {
+		if (roomName == null)
 			throw new NullPointerException("Room was null.");
 		
 		synchronized (chatRooms) {
-			String roomName = room.getName();
-			ChatRoomType roomType = room.getType();
 			boolean roomExists = chatRooms.containsKey(roomName);
 			if (roomExists) {
-				chatRooms.remove(roomName);
-				if (roomType == ChatRoomType.PUBLIC) {
-					synchronized (publicRoomNames) {
-						publicRoomNames.remove(roomName);
-					}
-				}
-
-				logger.trace("Room " + roomName + " removed.");
-				logger.trace(chatRooms);
-				logger.trace(publicRoomNames);
+				ChatRoom room = chatRooms.get(roomName);
 				
-				return true;
+				if (room.getUsers().isEmpty()) {
+					room = chatRooms.remove(roomName);
+					if (room.getType() == ChatRoomType.PUBLIC) {
+						synchronized (publicRoomNames) {
+							publicRoomNames.remove(roomName);
+						}
+					}
+					room = null;
+
+					logger.trace("Room " + roomName + " removed.");
+					logger.trace(chatRooms);
+					logger.trace(publicRoomNames);
+					
+					return true;
+				}
 			}
 			return false;
 		}
@@ -97,6 +108,20 @@ public class ChatServer {
 	
 	public Set<ChatUser> listUsers() {
 		return Collections.unmodifiableSet(users);
+	}
+	
+	public Set<ChatUser> listUsersInRoom(String roomName) {
+		if (roomName == null)
+			throw new NullPointerException("Room was null.");
+		
+		synchronized (chatRooms) {
+			boolean roomExists = chatRooms.containsKey(roomName);
+			if (roomExists) {
+				ChatRoom room = chatRooms.get(roomName);
+				return room.getUsers();
+			}
+		}
+		return null;
 	}
 	
 	public boolean addUserIfUnique(ChatUser user) {
@@ -132,7 +157,7 @@ public class ChatServer {
 		}
 	}
 	
-	public void addConnection(ClientConnection connection) {
+	private void addConnection(ClientConnection connection) {
 		if (connection == null)
 			throw new NullPointerException("Connection was null.");
 		
@@ -142,7 +167,7 @@ public class ChatServer {
 		}
 	}
 	
-	public void removeConnection(ClientConnection connection) {
+	private void removeConnection(ClientConnection connection) {
 		if (connection == null)
 			throw new NullPointerException("Connection was null.");		
 		
@@ -150,6 +175,39 @@ public class ChatServer {
 			connections.remove(connection);
 			logger.trace("Connection removed.");
 		}
+	}
+	
+	public String handleMessage(ClientConnection connection, ChatMessage message) {
+		for (IChatMessageHandler handler : messageHandlers) {
+			ChatServerAction action = handler.handleMessage(message);
+			if (action == ChatServerAction.CLOSE_CONNECTION) {
+				removeConnection(connection);
+				connection.closeConnection();
+			}
+			else if (action == ChatServerAction.UNKNOWN_COMMAND) {
+				return "COMMAND UNKNOWN";
+			}
+			else if (action == ChatServerAction.SUBMITNAME) {
+				return "SUBMITNAME";
+			}
+			else if (action == ChatServerAction.SUBMITNAME_OK) {
+				return "SUBMITNAME OK";
+			}
+			else if (action == ChatServerAction.ROOM_DOESNT_EXIST) {
+				return "ROOM DOESN'T EXIST";
+			}
+			else if (action == ChatServerAction.LIST_ROOMS) {
+				return "NOT IMPLEMENTED";
+			}
+			else if (action == ChatServerAction.HANDLED_NO_RESPONSE) {
+				return "";
+			}
+			else if (action == ChatServerAction.NOT_MY_MESSAGE) {
+				continue;
+			}
+		}
+		
+		return "";
 	}
 	
 	public boolean deliverMessage(TextMessage message) {
@@ -166,6 +224,30 @@ public class ChatServer {
 			return true;
 		}
 		return false;
+	}
+
+	public boolean addUserToRoom(ChatUser user, String roomName) {
+		synchronized (chatRooms) {
+			if (chatRooms.containsKey(roomName)) {
+				ChatRoom room = chatRooms.get(roomName);
+				room.addUserIfUnique(user); // TODO: Should we check the return value here?
+				
+				return true;
+			}
+			return false;
+		}
+	}
+
+	public boolean removeUserFromRoom(ChatUser user, String roomName) {
+		synchronized (chatRooms) {
+			if (chatRooms.containsKey(roomName)) {
+				ChatRoom room = chatRooms.get(roomName);
+				room.removeUserIfExists(user); // TODO: Should we check the return value here?
+				
+				return true;
+			}
+			return false;
+		}
 	}
 	
 	public void start() {

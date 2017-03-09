@@ -1,4 +1,4 @@
-package com.phusu.chatservice;
+package com.phusu.chatservice.messages;
 
 /**
  * TextMessage represents a simple text-based message from a single client

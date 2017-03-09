@@ -1,9 +1,9 @@
-package com.phusu.chatservice;
+package com.phusu.chatservice.messages;
 
 /**
  * Enumeration of different recognized message types from client to server.
  */
-enum MessageType {
+public enum MessageType {
 	MESSAGE_TO("MESSAGE TO"),
 	COMMAND_SETNAME("COMMAND SETNAME"),
 	COMMAND_JOIN("COMMAND JOIN"),

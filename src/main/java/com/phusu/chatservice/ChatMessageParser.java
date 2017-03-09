@@ -1,5 +1,14 @@
 package com.phusu.chatservice;
 
+import com.phusu.chatservice.messages.ChatMessage;
+import com.phusu.chatservice.messages.JoinRoomMessage;
+import com.phusu.chatservice.messages.LeaveRoomMessage;
+import com.phusu.chatservice.messages.ListRoomsMessage;
+import com.phusu.chatservice.messages.MessageType;
+import com.phusu.chatservice.messages.QuitMessage;
+import com.phusu.chatservice.messages.SetNameMessage;
+import com.phusu.chatservice.messages.TextMessage;
+
 /**
  * ChatMessageParser parses incoming messages from client.
  * 
@@ -17,28 +26,28 @@ public class ChatMessageParser {
 			throw new NullPointerException("Line was null.");
 		
 		if (line.startsWith(MessageType.MESSAGE_TO.getMessageTypeAsString())) {
-			return parseMessage(line);
+			return parseTextMessage(line);
 		}
 		else if (line.startsWith(MessageType.COMMAND_SETNAME.getMessageTypeAsString())) {
-			return parseCommandMessage(MessageType.COMMAND_SETNAME, line);
+			return new SetNameMessage(parseArguments(MessageType.COMMAND_SETNAME, line));
 		}
 		else if (line.startsWith(MessageType.COMMAND_JOIN.getMessageTypeAsString())) {
-			return parseCommandMessage(MessageType.COMMAND_JOIN, line);
+			return new JoinRoomMessage(parseArguments(MessageType.COMMAND_JOIN, line));
 		}
 		else if (line.startsWith(MessageType.COMMAND_LEAVE.getMessageTypeAsString())) {
-			return parseCommandMessage(MessageType.COMMAND_LEAVE, line);
+			return new LeaveRoomMessage(parseArguments(MessageType.COMMAND_LEAVE, line));
 		}
 		else if (line.startsWith(MessageType.COMMAND_LISTROOMS.getMessageTypeAsString())) {
-			return parseCommandMessage(MessageType.COMMAND_LISTROOMS, line);
+			return new ListRoomsMessage();
 		}
 		else if (line.startsWith(MessageType.COMMAND_QUIT.getMessageTypeAsString())) {
-			return parseCommandMessage(MessageType.COMMAND_QUIT, line);
+			return new QuitMessage();
 		}
 		
 		throw new IllegalArgumentException("Unknown command.");
 	}
 
-	private static TextMessage parseMessage(String line) {
+	private static TextMessage parseTextMessage(String line) {
 		String room;
 		String message;
 		
@@ -61,18 +70,6 @@ public class ChatMessageParser {
 			throw new IllegalArgumentException("Empty message.");
 		
 		return new TextMessage(room, message);
-	}
-
-	private static ChatMessage parseCommandMessage(MessageType type, String line) {
-		if (type == MessageType.COMMAND_LISTROOMS) {
-			return new CommandMessage(MessageType.COMMAND_LISTROOMS);
-		}
-		else if (type == MessageType.COMMAND_QUIT) {
-			return new CommandMessage(MessageType.COMMAND_QUIT);
-		}
-		else {
-			return new CommandMessage(type, parseArguments(type, line));
-		}
 	}
 
 	private static String parseArguments(MessageType type, String line) {

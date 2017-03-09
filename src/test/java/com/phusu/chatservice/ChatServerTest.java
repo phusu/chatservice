@@ -7,12 +7,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.phusu.chatservice.messages.TextMessage;
+
 /**
  * Unit tests for ChatServer.
  */
 public class ChatServerTest {
 
 	private static final String USER_NAME_FOO = "foo";
+	private static final String ROOM_NAME = "general";
 	
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
@@ -21,69 +24,56 @@ public class ChatServerTest {
 	public void ChatServerListRoomsTest() {
 		ChatServer server = new ChatServer();
 		assertTrue(server.listPublicRoomNames().size() == 0);
-		ChatRoom room = mock(ChatRoom.class);
-		when(room.getType()).thenReturn(ChatRoomType.PUBLIC);
-		when(room.getName()).thenReturn("general");
-		assertTrue(server.addRoomIfUnique(room));
+		server.createRoomIfUnique(ROOM_NAME, ChatRoomType.PUBLIC);
 		assertTrue(server.listPublicRoomNames().size() == 1);
 	}
 	
 	@Test
 	public void ChatServerAddRoomTest() {
 		ChatServer server = new ChatServer();
-		ChatRoom room = mock(ChatRoom.class);
-		when(room.getType()).thenReturn(ChatRoomType.PUBLIC);
-		when(room.getName()).thenReturn("general");
-		assertTrue(server.addRoomIfUnique(room));
+		server.createRoomIfUnique(ROOM_NAME, ChatRoomType.PUBLIC);
 		assertTrue(server.listPublicRoomNames().size() == 1);
 	}
 	
 	@Test
 	public void ChatServerAddRoomDuplicateTest() {
 		ChatServer server = new ChatServer();
-		ChatRoom room = mock(ChatRoom.class);
-		when(room.getType()).thenReturn(ChatRoomType.PUBLIC);
-		when(room.getName()).thenReturn("general");
-
-		ChatRoom room2 = mock(ChatRoom.class);
-		when(room2.getType()).thenReturn(ChatRoomType.PUBLIC);
-		when(room2.getName()).thenReturn("general");
-		
-		assertTrue(server.addRoomIfUnique(room));
+		server.createRoomIfUnique(ROOM_NAME, ChatRoomType.PUBLIC);
 		assertTrue(server.listPublicRoomNames().size() == 1);
-		assertFalse(server.addRoomIfUnique(room2));
+		server.createRoomIfUnique(ROOM_NAME, ChatRoomType.PUBLIC);
 		assertTrue(server.listPublicRoomNames().size() == 1);
 	}
 	
 	@Test
 	public void ChatServerDeleteRoomTest() {
 		ChatServer server = new ChatServer();
-		ChatRoom room = mock(ChatRoom.class);
-		when(room.getType()).thenReturn(ChatRoomType.PUBLIC);
-		when(room.getName()).thenReturn("general");
-
-		assertTrue(server.addRoomIfUnique(room));
+		server.createRoomIfUnique(ROOM_NAME, ChatRoomType.PUBLIC);
 		assertTrue(server.listPublicRoomNames().size() == 1);
-		assertTrue(server.deleteRoomIfExists(room));
+		assertTrue(server.deleteRoomIfEmpty(ROOM_NAME));
 		assertTrue(server.listPublicRoomNames().size() == 0);
 	}
 
 	@Test
 	public void ChatServerDeleteRoomNotExistTest() {
 		ChatServer server = new ChatServer();
-		ChatRoom room = mock(ChatRoom.class);
-		when(room.getType()).thenReturn(ChatRoomType.PUBLIC);
-		when(room.getName()).thenReturn("general");
 
-		assertFalse(server.deleteRoomIfExists(room));
+		assertFalse(server.deleteRoomIfEmpty(ROOM_NAME));
 	}
 
 	@Test
-	public void ChatServerAddRoomNullTest() {
+	public void ChatServerAddRoomNullNameTest() {
 		ChatServer server = new ChatServer();
 		exception.expect(NullPointerException.class);
-		exception.expectMessage("Room was null.");
-		server.addRoomIfUnique(null);
+		exception.expectMessage("Room name was null.");
+		server.createRoomIfUnique(null, ChatRoomType.PUBLIC);
+	}
+
+	@Test
+	public void ChatServerAddRoomNullTypeTest() {
+		ChatServer server = new ChatServer();
+		exception.expect(NullPointerException.class);
+		exception.expectMessage("Room type was null.");
+		server.createRoomIfUnique(ROOM_NAME, null);
 	}
 
 	@Test
@@ -91,7 +81,7 @@ public class ChatServerTest {
 		ChatServer server = new ChatServer();
 		exception.expect(NullPointerException.class);
 		exception.expectMessage("Room was null.");
-		server.deleteRoomIfExists(null);
+		server.deleteRoomIfEmpty(null);
 	}
 	
 	@Test
@@ -119,9 +109,17 @@ public class ChatServerTest {
 		assertFalse(server.addUserIfUnique(user2));
 		assertTrue(server.listUsers().size() == 1);
 	}
+
+	@Test
+	public void ChatServerAddUserNullTest() {
+		ChatServer server = new ChatServer();
+		exception.expect(NullPointerException.class);
+		exception.expectMessage("User was null.");
+		server.addUserIfUnique(null);
+	}
 	
 	@Test
-	public void ChatServerDeleteUserTest() {
+	public void ChatServerRemoveUserTest() {
 		ChatServer server = new ChatServer();
 		ChatUser user = mock(ChatUser.class);
 		assertTrue(server.addUserIfUnique(user));
@@ -131,7 +129,7 @@ public class ChatServerTest {
 	}
 	
 	@Test
-	public void ChatServerDeleteUserNotExistsTest() {
+	public void ChatServerRemoveUserNotExistsTest() {
 		ChatServer server = new ChatServer();
 		ChatUser user = mock(ChatUser.class);
 		exception.expect(IllegalArgumentException.class);
@@ -140,15 +138,7 @@ public class ChatServerTest {
 	}
 
 	@Test
-	public void ChatServerAddUserNullTest() {
-		ChatServer server = new ChatServer();
-		exception.expect(NullPointerException.class);
-		exception.expectMessage("User was null.");
-		server.addUserIfUnique(null);
-	}
-
-	@Test
-	public void ChatServerDeleteUserNullTest() {
+	public void ChatServerRemoveUserNullTest() {
 		ChatServer server = new ChatServer();
 		exception.expect(NullPointerException.class);
 		exception.expectMessage("User was null.");
@@ -156,28 +146,25 @@ public class ChatServerTest {
 	}
 	
 	@Test
-	public void ChatServerAddConnectionNullTest() {
+	public void ChatServerRemoveUserFromRoomTest() {
 		ChatServer server = new ChatServer();
-		exception.expect(NullPointerException.class);
-		exception.expectMessage("Connection was null.");
-		server.addConnection(null);
-	}
-	
-	@Test
-	public void ChatServerRemoveConnectionNullTest() {
-		ChatServer server = new ChatServer();
-		exception.expect(NullPointerException.class);
-		exception.expectMessage("Connection was null.");
-		server.removeConnection(null);
+		ChatUser user = new SimpleChatUser(null, USER_NAME_FOO);
+		
+		server.createRoomIfUnique(ROOM_NAME + " 1", ChatRoomType.PUBLIC);
+		server.createRoomIfUnique(ROOM_NAME + " 2", ChatRoomType.PUBLIC);
+		assertTrue(server.addUserIfUnique(user));
+		assertTrue(server.addUserToRoom(user, ROOM_NAME + " 2"));
+		
+		assertTrue(server.listUsers().size() == 1);
+		server.removeUser(user);
+		assertTrue(server.listUsers().size() == 0);
+		assertTrue(server.listUsersInRoom(ROOM_NAME + " 2").size() == 0);
 	}
 	
 	@Test
 	public void ChatServerDeliverMessageTest() {
 		ChatServer server = new ChatServer();
-		ChatRoom room = mock(ChatRoom.class);
-		when(room.getName()).thenReturn("general");
-		when(room.getType()).thenReturn(ChatRoomType.PUBLIC);
-		server.addRoomIfUnique(room);
+		server.createRoomIfUnique(ROOM_NAME, ChatRoomType.PUBLIC);
 		TextMessage message = mock(TextMessage.class);
 		when(message.getChatRoomName()).thenReturn("general");
 		when(message.getMessage()).thenReturn("test message");
