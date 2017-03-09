@@ -21,6 +21,11 @@ public class ChatServerTest {
 	public void ChatServerListRoomsTest() {
 		ChatServer server = new ChatServer();
 		assertTrue(server.listPublicRoomNames().size() == 0);
+		ChatRoom room = mock(ChatRoom.class);
+		when(room.getType()).thenReturn(ChatRoomType.PUBLIC);
+		when(room.getName()).thenReturn("general");
+		assertTrue(server.addRoomIfUnique(room));
+		assertTrue(server.listPublicRoomNames().size() == 1);
 	}
 	
 	@Test
@@ -30,6 +35,23 @@ public class ChatServerTest {
 		when(room.getType()).thenReturn(ChatRoomType.PUBLIC);
 		when(room.getName()).thenReturn("general");
 		assertTrue(server.addRoomIfUnique(room));
+		assertTrue(server.listPublicRoomNames().size() == 1);
+	}
+	
+	@Test
+	public void ChatServerAddRoomDuplicateTest() {
+		ChatServer server = new ChatServer();
+		ChatRoom room = mock(ChatRoom.class);
+		when(room.getType()).thenReturn(ChatRoomType.PUBLIC);
+		when(room.getName()).thenReturn("general");
+
+		ChatRoom room2 = mock(ChatRoom.class);
+		when(room2.getType()).thenReturn(ChatRoomType.PUBLIC);
+		when(room2.getName()).thenReturn("general");
+		
+		assertTrue(server.addRoomIfUnique(room));
+		assertTrue(server.listPublicRoomNames().size() == 1);
+		assertFalse(server.addRoomIfUnique(room2));
 		assertTrue(server.listPublicRoomNames().size() == 1);
 	}
 	
@@ -44,6 +66,16 @@ public class ChatServerTest {
 		assertTrue(server.listPublicRoomNames().size() == 1);
 		assertTrue(server.deleteRoomIfExists(room));
 		assertTrue(server.listPublicRoomNames().size() == 0);
+	}
+
+	@Test
+	public void ChatServerDeleteRoomNotExistTest() {
+		ChatServer server = new ChatServer();
+		ChatRoom room = mock(ChatRoom.class);
+		when(room.getType()).thenReturn(ChatRoomType.PUBLIC);
+		when(room.getName()).thenReturn("general");
+
+		assertFalse(server.deleteRoomIfExists(room));
 	}
 
 	@Test
@@ -96,6 +128,15 @@ public class ChatServerTest {
 		assertTrue(server.listUsers().size() == 1);
 		server.removeUser(user);
 		assertTrue(server.listUsers().size() == 0);
+	}
+	
+	@Test
+	public void ChatServerDeleteUserNotExistsTest() {
+		ChatServer server = new ChatServer();
+		ChatUser user = mock(ChatUser.class);
+		exception.expect(IllegalArgumentException.class);
+		exception.expectMessage("User doesn't exist.");
+		server.removeUser(user);
 	}
 
 	@Test

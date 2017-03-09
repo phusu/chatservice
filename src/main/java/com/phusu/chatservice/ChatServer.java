@@ -30,6 +30,7 @@ public class ChatServer {
 	private final static int PORT = 9001;
 	
 	public ChatServer() {
+		logger.trace("ChatServer created");
 		this.chatRooms = new HashMap<String, ChatRoom>();
 		this.users = new HashSet<ChatUser>();
 		this.connections = new ArrayList<ClientConnection>();
@@ -45,18 +46,26 @@ public class ChatServer {
 			throw new NullPointerException("Room was null.");
 		
 		synchronized (chatRooms) {
-			boolean roomExists = chatRooms.containsKey(room.getName());
+			String roomName = room.getName();
+			ChatRoomType roomType = room.getType();
+			boolean roomExists = chatRooms.containsKey(roomName);
 			if (!roomExists) {
-				chatRooms.put(room.getName(), room);
+				chatRooms.put(roomName, room);
 			
-				if (room.getType() == ChatRoomType.PUBLIC) {
+				if (roomType == ChatRoomType.PUBLIC) {
 					synchronized (publicRoomNames) {
-						publicRoomNames.add(room.getName());	
+						publicRoomNames.add(roomName);	
 					}
 				}
+				
+				logger.trace("Room " + roomName + " added.");
+				logger.trace(chatRooms);
+				logger.trace(publicRoomNames);
+				
+				return true;
 			}
 			
-			return roomExists;	
+			return false;	
 		}
 	}
 
@@ -65,16 +74,24 @@ public class ChatServer {
 			throw new NullPointerException("Room was null.");
 		
 		synchronized (chatRooms) {
-			boolean roomExists = chatRooms.containsKey(room.getName());
+			String roomName = room.getName();
+			ChatRoomType roomType = room.getType();
+			boolean roomExists = chatRooms.containsKey(roomName);
 			if (roomExists) {
 				chatRooms.remove(room);
-				if (room.getType() == ChatRoomType.PUBLIC) {
+				if (roomType == ChatRoomType.PUBLIC) {
 					synchronized (publicRoomNames) {
-						publicRoomNames.remove(room.getName());
+						publicRoomNames.remove(roomName);
 					}
 				}
+
+				logger.trace("Room " + roomName + " removed.");
+				logger.trace(chatRooms);
+				logger.trace(publicRoomNames);
+				
+				return true;
 			}
-			return roomExists;
+			return false;
 		}
 	}
 	
@@ -87,7 +104,12 @@ public class ChatServer {
 			throw new NullPointerException("User was null.");
 		
 		synchronized (users) {
-			return users.add(user);
+			boolean result = users.add(user);
+			if (result) {
+				logger.trace("User " + user.getName() + " added.");
+				logger.trace(users);
+			}
+			return result;
 		}	
 	}
 
@@ -103,6 +125,9 @@ public class ChatServer {
 				for (ChatRoom chatRoom : chatRooms.values()) {
 					chatRoom.removeUserIfExists(user);
 				}
+				
+				logger.trace("User " + user.getName() + " removed.");
+				logger.trace(users);
 			}
 		}
 	}
@@ -113,6 +138,7 @@ public class ChatServer {
 		
 		synchronized (connections) {
 			connections.add(connection);
+			logger.trace("Connection added.");
 		}
 	}
 	
@@ -122,6 +148,7 @@ public class ChatServer {
 		
 		synchronized (connections) {
 			connections.remove(connection);
+			logger.trace("Connection removed.");
 		}
 	}
 	
@@ -131,6 +158,8 @@ public class ChatServer {
 			for (ChatUser chatUser : users) {
 				chatUser.getClientConnection().deliverMessage(message);
 			}
+			
+			logger.trace("Delivered to: " + chatRoomName + ", message: " + message);
 		}
 	}
 	
