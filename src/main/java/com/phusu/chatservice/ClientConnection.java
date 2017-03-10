@@ -18,8 +18,9 @@ public class ClientConnection extends Thread {
 	private static final Logger logger = LogManager.getLogger(ClientConnection.class);
 	
 	private Socket socket;
+	private BufferedReader input;
+	private PrintWriter output;
 	private ChatServer server;
-	private IOHandler handler;
 	private boolean connectionClosed = false;
 	private ChatUser user;
 	
@@ -28,42 +29,8 @@ public class ClientConnection extends Thread {
 		this.server = server;
 	}
 	
-	@Override
-	public void run() {
-		try {
-			BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			PrintWriter output = new PrintWriter(socket.getOutputStream());
-			
-			handler = new IOHandler(input, output);
-			handler.sendLine("SUBMITNAME");			
-			processMessages();
-			
-		}
-		catch (IOException e) {
-			logger.catching(e);
-		}
-		catch (NullPointerException e) {
-			logger.catching(e);
-		}
-		finally {
-			closeConnection();
-		}
-	}
-
-	private void processMessages() throws IOException {
-		while (!connectionClosed) {
-			ChatMessage message = handler.getMessage();
-			message.setClientConnection(this);
-			message.setAuthor(user);
-			String response = server.handleMessage(this, message);
-			if (!response.isEmpty()) {
-				handler.sendLine(response);
-			}
-		}
-	}
-	
 	public void deliverMessage(String message) {
-		handler.sendLine(message);
+		sendLine(message);
 	}
 
 	public void closeConnection() {
@@ -82,5 +49,49 @@ public class ClientConnection extends Thread {
 
 	public void setUser(ChatUser user) {
 		this.user = user;
+	}
+	
+	@Override
+	public void run() {
+		try {
+			input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			output = new PrintWriter(socket.getOutputStream());
+			
+			sendLine("SUBMITNAME");			
+			processMessages();
+			
+		}
+		catch (IOException e) {
+			logger.catching(e);
+		}
+		catch (NullPointerException e) {
+			logger.catching(e);
+		}
+		finally {
+			closeConnection();
+		}
+	}
+	
+	private void sendLine(String line) {
+		output.println(line);
+		logger.trace("Sent line: " + line);
+	}
+
+	private void processMessages() throws IOException {
+		while (!connectionClosed) {
+			ChatMessage message = getMessage();
+			message.setClientConnection(this);
+			message.setAuthor(user);
+			String response = server.handleMessage(this, message);
+			if (!response.isEmpty()) {
+				sendLine(response);
+			}
+		}
+	}
+
+	private ChatMessage getMessage() throws IOException {
+		String line = input.readLine();
+		logger.trace("Read line: " + line);
+		return ChatMessageParser.parseLine(line);
 	}
 }

@@ -1,6 +1,7 @@
 package com.phusu.chatservice;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,8 +35,8 @@ public class ChatMessageParserTest {
 				+ " " + DESTINATION + " " + CONTENTS);
 		assertTrue(message instanceof TextMessage);
 		TextMessage msg = (TextMessage) message;
-		assertTrue("Expected " + DESTINATION + ", was " + msg.getChatRoomName(), 
-				msg.getChatRoomName().equals(DESTINATION));
+		assertTrue("Expected " + DESTINATION + ", was " + msg.getRoomName(), 
+				msg.getRoomName().equals(DESTINATION));
 		assertTrue("Expected " + CONTENTS + ", was " + msg.getMessage(), 
 				msg.getMessage().equals(CONTENTS));
 	}
@@ -148,5 +149,16 @@ public class ChatMessageParserTest {
 		QuitMessage msg = (QuitMessage) message;
 		assertTrue("Expected " + MessageType.COMMAND_QUIT + ", was " + msg.getMessageType(), 
 				msg.getMessageType().equals(MessageType.COMMAND_QUIT));
+	}
+	
+	@Test
+	public void ChatMessageParseMessageAuthorConnectionTest() {
+		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_LEAVE.getMessageTypeAsString()  + " " + DESTINATION);
+		ChatUser user = mock(SimpleChatUser.class);
+		ClientConnection connection = mock(ClientConnection.class);
+		message.setAuthor(user);
+		assertTrue(message.getAuthor().equals(user));
+		message.setClientConnection(connection);
+		assertTrue(message.getClientConnection() == connection);
 	}
 }

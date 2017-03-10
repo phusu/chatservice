@@ -7,11 +7,11 @@ package com.phusu.chatservice.messages;
 public class TextMessage extends ChatMessage {
 	
 	private String message;
-	private String chatRoomName;
+	private String roomName;
 
-	public TextMessage(String chatRoomName, String message) {
+	public TextMessage(String roomName, String message) {
 		super(MessageType.MESSAGE_TO);
-		this.chatRoomName = chatRoomName;
+		this.roomName = roomName;
 		this.message = message;
 	}
 	
@@ -19,7 +19,7 @@ public class TextMessage extends ChatMessage {
 		return message;
 	}
 	
-	public String getChatRoomName() {
-		return chatRoomName;
+	public String getRoomName() {
+		return roomName;
 	}
 }

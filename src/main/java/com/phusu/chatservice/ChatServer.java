@@ -112,7 +112,7 @@ public class ChatServer {
 	
 	public Set<ChatUser> listUsersInRoom(String roomName) {
 		if (roomName == null)
-			throw new NullPointerException("Room was null.");
+			throw new NullPointerException("Room name was null.");
 		
 		synchronized (chatRooms) {
 			boolean roomExists = chatRooms.containsKey(roomName);
@@ -211,7 +211,7 @@ public class ChatServer {
 	}
 	
 	public boolean deliverMessage(TextMessage message) {
-		String chatRoomName = message.getChatRoomName();
+		String chatRoomName = message.getRoomName();
 		String chatMessage = message.getMessage();
 		if (chatRooms.containsKey(chatRoomName)) {
 			Set<ChatUser> users = chatRooms.get(chatRoomName).getUsers();
@@ -230,9 +230,9 @@ public class ChatServer {
 		synchronized (chatRooms) {
 			if (chatRooms.containsKey(roomName)) {
 				ChatRoom room = chatRooms.get(roomName);
-				room.addUserIfUnique(user); // TODO: Should we check the return value here?
+				boolean userAdded = room.addUserIfUnique(user);
 				
-				return true;
+				return userAdded;
 			}
 			return false;
 		}
@@ -242,9 +242,9 @@ public class ChatServer {
 		synchronized (chatRooms) {
 			if (chatRooms.containsKey(roomName)) {
 				ChatRoom room = chatRooms.get(roomName);
-				room.removeUserIfExists(user); // TODO: Should we check the return value here?
+				boolean userRemoved = room.removeUserIfExists(user);
 				
-				return true;
+				return userRemoved;
 			}
 			return false;
 		}

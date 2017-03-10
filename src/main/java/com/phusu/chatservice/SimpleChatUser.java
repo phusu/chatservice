@@ -9,6 +9,12 @@ public class SimpleChatUser extends ChatUser {
 	
 	public SimpleChatUser(ClientConnection clientConnection, String userName) {
 		super(clientConnection);
+
+		if (userName == null)
+			throw new NullPointerException("User name was null.");
+		if (userName.isEmpty())
+			throw new IllegalArgumentException("User name cannot be empty.");
+		
 		this.userName = userName;
 	}
 
