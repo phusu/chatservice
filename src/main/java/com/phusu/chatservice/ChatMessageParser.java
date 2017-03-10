@@ -8,6 +8,7 @@ import com.phusu.chatservice.messages.MessageType;
 import com.phusu.chatservice.messages.QuitMessage;
 import com.phusu.chatservice.messages.SetNameMessage;
 import com.phusu.chatservice.messages.TextMessage;
+import com.phusu.chatservice.messages.UnknownMessage;
 
 /**
  * ChatMessageParser parses incoming messages from client.
@@ -36,7 +37,7 @@ public class ChatMessageParser {
 			return new QuitMessage();
 		}
 		
-		throw new IllegalArgumentException("Unknown command.");
+		return new UnknownMessage();
 	}
 
 	private static TextMessage parseTextMessage(String line) {

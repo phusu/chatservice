@@ -57,6 +57,7 @@ public class ChatServer {
 		this.messageHandlers.add(new JoinRoomMessageHandler(this));
 		this.messageHandlers.add(new LeaveRoomMessageHandler(this));
 		this.messageHandlers.add(new ListRoomsMessageHandler(this));
+		this.messageHandlers.add(new UnknownMessageHandler());
 	}
 	
 	public Set<String> listPublicRoomNames() {

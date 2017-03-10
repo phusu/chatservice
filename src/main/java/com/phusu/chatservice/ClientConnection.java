@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.phusu.chatservice.messages.ChatMessage;
+import com.phusu.chatservice.messages.SetNameMessage;
 
 /**
  * ClientConnection 
@@ -55,9 +56,9 @@ public class ClientConnection extends Thread {
 	public void run() {
 		try {
 			input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			output = new PrintWriter(socket.getOutputStream());
+			output = new PrintWriter(socket.getOutputStream(), true);
 			
-			sendLine("SUBMITNAME");			
+			getValidUserName();
 			processMessages();
 			
 		}
@@ -69,6 +70,22 @@ public class ClientConnection extends Thread {
 		}
 		finally {
 			closeConnection();
+		}
+	}
+	
+	private void getValidUserName() throws IOException {
+		boolean userNameIsValid = false;
+		while (!userNameIsValid) {
+			sendLine("SETNAME");
+			ChatMessage message = getMessage();
+			if (message instanceof SetNameMessage) {
+				message.setClientConnection(this);
+				String response = server.handleMessage(this, message);
+				sendLine(response);
+				if (this.user != null) {
+					userNameIsValid = true;	
+				}
+			}
 		}
 	}
 	

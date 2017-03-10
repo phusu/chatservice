@@ -28,8 +28,14 @@ public class JoinRoomMessageHandler implements IChatMessageHandler {
 			
 			if (succeeded) {
 				// Notify also others
-				TextMessage userJoinedMessage = new TextMessage(roomName, author.getName() + " joined!");
-				server.deliverMessageToRoom(userJoinedMessage);
+				String userJoinedMessage = MessageType.RESPONSE_MESSAGE_FROM.getMessageTypeAsString();
+				userJoinedMessage = userJoinedMessage.replace("<from>", author.getName());
+				userJoinedMessage = userJoinedMessage.replace("<to>", roomName);
+				userJoinedMessage = userJoinedMessage.replace("<message>", author.getName() + " joined!");
+				TextMessage textMessage = new TextMessage(roomName, userJoinedMessage);
+				textMessage.setAuthor(author);
+				textMessage.setClientConnection(author.getClientConnection());
+				server.deliverMessageToRoom(textMessage);
 				
 				String response = MessageType.RESPONSE_JOIN_OK.getMessageTypeAsString().replace("<room>", roomName);
 				return new ChatServerResponse(response);

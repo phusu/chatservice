@@ -27,9 +27,15 @@ public class LeaveRoomMessageHandler implements IChatMessageHandler {
 			
 			if (succeeded) {
 				// Notify also others
-				TextMessage userJoinedMessage = new TextMessage(roomName, author.getName() + " left!");
-				server.deliverMessageToRoom(userJoinedMessage);
-
+				String userLeftMessage = MessageType.RESPONSE_MESSAGE_FROM.getMessageTypeAsString();
+				userLeftMessage = userLeftMessage.replace("<from>", author.getName());
+				userLeftMessage = userLeftMessage.replace("<to>", roomName);
+				userLeftMessage = userLeftMessage.replace("<message>", author.getName() + " left!");
+				TextMessage textMessage = new TextMessage(roomName, userLeftMessage);
+				textMessage.setAuthor(author);
+				textMessage.setClientConnection(author.getClientConnection());
+				server.deliverMessageToRoom(textMessage);
+				
 				String response = MessageType.RESPONSE_LEAVE_OK.getMessageTypeAsString().replace("<room>", roomName);
 				return new ChatServerResponse(response);	
 			}
