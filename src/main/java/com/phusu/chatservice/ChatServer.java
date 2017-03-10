@@ -22,6 +22,16 @@ import com.phusu.chatservice.messages.TextMessage;
  * ChatServer represents our server. It holds all the different chat rooms
  * and users. It contains the application main method, which will create
  * the server and start listening the specified port for incoming client connections.
+ * 
+ * Supported commands from client->server	|	Responses from server->client
+ * -----------------------------------------|-----------------------------------------
+ * MESSAGE TO roomname message				| <MESSAGE FROM user TO roomname message>
+ * COMMAND SETNAME name						| <RESPONSE SETNAME OK> or <RESPONSE SETNAME NOT VALID>
+ * COMMAND JOIN roomname					| <RESPONSE JOIN roomname OK> or <RESPONSE JOIN roomname NOT EXIST>
+ * COMMAND LEAVE roomname					| <RESPONSE LEAVE roomname OK> or <RESPONSE LEAVE roomname NOT EXIST>
+ * COMMAND LISTROOMS						| <RESPONSE LISTROOMS room1 room2 room3 ... roomn>
+ * COMMAND QUIT								| no response
+ *  
  */
 public class ChatServer {
 	private Map<String, ChatRoom> chatRooms;
@@ -42,11 +52,11 @@ public class ChatServer {
 		this.publicRoomNames = new HashSet<String>();
 		this.messageHandlers = new ArrayList<IChatMessageHandler>();
 		this.messageHandlers.add(new TextMessageHandler(this));
-		this.messageHandlers.add(new QuitMessageHandler());
+		this.messageHandlers.add(new QuitMessageHandler(this));
 		this.messageHandlers.add(new SetNameMessageHandler(this));
 		this.messageHandlers.add(new JoinRoomMessageHandler(this));
 		this.messageHandlers.add(new LeaveRoomMessageHandler(this));
-		this.messageHandlers.add(new ListRoomsMessageHandler());
+		this.messageHandlers.add(new ListRoomsMessageHandler(this));
 	}
 	
 	public Set<String> listPublicRoomNames() {
@@ -167,7 +177,7 @@ public class ChatServer {
 		}
 	}
 	
-	private void removeConnection(ClientConnection connection) {
+	public void removeConnection(ClientConnection connection) {
 		if (connection == null)
 			throw new NullPointerException("Connection was null.");		
 		
@@ -179,30 +189,11 @@ public class ChatServer {
 	
 	public String handleMessage(ClientConnection connection, ChatMessage message) {
 		for (IChatMessageHandler handler : messageHandlers) {
-			ChatServerAction action = handler.handleMessage(message);
-			if (action == ChatServerAction.CLOSE_CONNECTION) {
-				removeConnection(connection);
-				connection.closeConnection();
+			ChatServerResponse response = handler.handleMessage(message);
+			if (response.isResponseHandled()) {
+				return response.getResponse();
 			}
-			else if (action == ChatServerAction.UNKNOWN_COMMAND) {
-				return "COMMAND UNKNOWN";
-			}
-			else if (action == ChatServerAction.SUBMITNAME) {
-				return "SUBMITNAME";
-			}
-			else if (action == ChatServerAction.SUBMITNAME_OK) {
-				return "SUBMITNAME OK";
-			}
-			else if (action == ChatServerAction.ROOM_DOESNT_EXIST) {
-				return "ROOM DOESN'T EXIST";
-			}
-			else if (action == ChatServerAction.LIST_ROOMS) {
-				return "NOT IMPLEMENTED";
-			}
-			else if (action == ChatServerAction.HANDLED_NO_RESPONSE) {
-				return "";
-			}
-			else if (action == ChatServerAction.NOT_MY_MESSAGE) {
+			else {
 				continue;
 			}
 		}
@@ -210,7 +201,7 @@ public class ChatServer {
 		return "";
 	}
 	
-	public boolean deliverMessage(TextMessage message) {
+	public boolean deliverMessageToRoom(TextMessage message) {
 		String chatRoomName = message.getRoomName();
 		String chatMessage = message.getMessage();
 		if (chatRooms.containsKey(chatRoomName)) {

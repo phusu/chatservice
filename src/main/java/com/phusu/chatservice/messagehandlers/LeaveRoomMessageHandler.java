@@ -1,9 +1,11 @@
 package com.phusu.chatservice.messagehandlers;
 
 import com.phusu.chatservice.ChatServer;
-import com.phusu.chatservice.ChatServerAction;
+import com.phusu.chatservice.ChatServerResponse;
+import com.phusu.chatservice.ChatUser;
 import com.phusu.chatservice.messages.ChatMessage;
 import com.phusu.chatservice.messages.LeaveRoomMessage;
+import com.phusu.chatservice.messages.MessageType;
 import com.phusu.chatservice.messages.TextMessage;
 
 public class LeaveRoomMessageHandler implements IChatMessageHandler {
@@ -15,21 +17,27 @@ public class LeaveRoomMessageHandler implements IChatMessageHandler {
 	}
 
 	@Override
-	public ChatServerAction handleMessage(ChatMessage message) {
+	public ChatServerResponse handleMessage(ChatMessage message) {
 		if (message instanceof LeaveRoomMessage) {
 			LeaveRoomMessage leaveRoomMessage = (LeaveRoomMessage) message;
-			boolean succeeded = server.removeUserFromRoom(leaveRoomMessage.getAuthor(), leaveRoomMessage.getRoomName());
-			server.deleteRoomIfEmpty(leaveRoomMessage.getRoomName());
+			String roomName = leaveRoomMessage.getRoomName();
+			ChatUser author = leaveRoomMessage.getAuthor();
+			boolean succeeded = server.removeUserFromRoom(author, roomName);
+			server.deleteRoomIfEmpty(roomName);
 			
 			if (succeeded) {
 				// Notify also others
-				TextMessage userJoinedMessage = new TextMessage(leaveRoomMessage.getRoomName(), leaveRoomMessage.getAuthor().getName() + " left!");
-				server.deliverMessage(userJoinedMessage);
-				
-				return ChatServerAction.HANDLED_NO_RESPONSE;
+				TextMessage userJoinedMessage = new TextMessage(roomName, author.getName() + " left!");
+				server.deliverMessageToRoom(userJoinedMessage);
+
+				String response = MessageType.RESPONSE_LEAVE_OK.getMessageTypeAsString().replace("<room>", roomName);
+				return new ChatServerResponse(response);	
 			}
-			return ChatServerAction.ROOM_DOESNT_EXIST;
+			else {
+				String response = MessageType.RESPONSE_LEAVE_NOT_VALID.getMessageTypeAsString().replace("<room>", roomName);
+				return new ChatServerResponse(response);	
+			}
 		}
-		return ChatServerAction.NOT_MY_MESSAGE;
+		return new ChatServerResponse();
 	}
 }

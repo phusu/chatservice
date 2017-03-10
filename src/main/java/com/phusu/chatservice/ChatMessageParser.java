@@ -11,14 +11,6 @@ import com.phusu.chatservice.messages.TextMessage;
 
 /**
  * ChatMessageParser parses incoming messages from client.
- * 
- * Supported commands:
- * MESSAGE TO roomname message
- * COMMAND SETNAME name
- * COMMAND JOIN roomname
- * COMMAND LEAVE roomname
- * COMMAND LISTROOMS
- * COMMAND QUIT
  */
 public class ChatMessageParser {
 	public static ChatMessage parseLine(String line) {

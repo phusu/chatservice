@@ -2,9 +2,11 @@ package com.phusu.chatservice.messagehandlers;
 
 import com.phusu.chatservice.ChatRoomType;
 import com.phusu.chatservice.ChatServer;
-import com.phusu.chatservice.ChatServerAction;
+import com.phusu.chatservice.ChatServerResponse;
+import com.phusu.chatservice.ChatUser;
 import com.phusu.chatservice.messages.ChatMessage;
 import com.phusu.chatservice.messages.JoinRoomMessage;
+import com.phusu.chatservice.messages.MessageType;
 import com.phusu.chatservice.messages.TextMessage;
 
 public class JoinRoomMessageHandler implements IChatMessageHandler {
@@ -16,26 +18,29 @@ public class JoinRoomMessageHandler implements IChatMessageHandler {
 	}
 	
 	@Override
-	public ChatServerAction handleMessage(ChatMessage message) {
+	public ChatServerResponse handleMessage(ChatMessage message) {
 		if (message instanceof JoinRoomMessage) {
 			JoinRoomMessage joinRoomMessage = (JoinRoomMessage) message;
-			
-			server.createRoomIfUnique(joinRoomMessage.getRoomName(), ChatRoomType.PUBLIC);
-			boolean succeeded = server.addUserToRoom(joinRoomMessage.getAuthor(), joinRoomMessage.getRoomName());
+			String roomName = joinRoomMessage.getRoomName();
+			ChatUser author = joinRoomMessage.getAuthor();
+			server.createRoomIfUnique(roomName, ChatRoomType.PUBLIC);
+			boolean succeeded = server.addUserToRoom(author, roomName);
 			
 			if (succeeded) {
 				// Notify also others
-				TextMessage userJoinedMessage = new TextMessage(joinRoomMessage.getRoomName(), joinRoomMessage.getAuthor().getName() + " joined!");
-				server.deliverMessage(userJoinedMessage);
+				TextMessage userJoinedMessage = new TextMessage(roomName, author.getName() + " joined!");
+				server.deliverMessageToRoom(userJoinedMessage);
 				
-				return ChatServerAction.HANDLED_NO_RESPONSE;
+				String response = MessageType.RESPONSE_JOIN_OK.getMessageTypeAsString().replace("<room>", roomName);
+				return new ChatServerResponse(response);
 			}
 			else {
-				return ChatServerAction.ROOM_DOESNT_EXIST;
+				String response = MessageType.RESPONSE_JOIN_NOT_VALID.getMessageTypeAsString().replace("<room>", roomName);
+				return new ChatServerResponse(response);
 			}
 		}
 		else {
-			return ChatServerAction.NOT_MY_MESSAGE;
+			return new ChatServerResponse();
 		}
 	}
 }

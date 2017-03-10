@@ -1,8 +1,9 @@
 package com.phusu.chatservice.messagehandlers;
 
 import com.phusu.chatservice.ChatServer;
-import com.phusu.chatservice.ChatServerAction;
+import com.phusu.chatservice.ChatServerResponse;
 import com.phusu.chatservice.messages.ChatMessage;
+import com.phusu.chatservice.messages.MessageType;
 import com.phusu.chatservice.messages.TextMessage;
 
 public class TextMessageHandler implements IChatMessageHandler {
@@ -14,14 +15,18 @@ public class TextMessageHandler implements IChatMessageHandler {
 	}
 
 	@Override
-	public ChatServerAction handleMessage(ChatMessage message) {
+	public ChatServerResponse handleMessage(ChatMessage message) {
 		if (message instanceof TextMessage) {
 			TextMessage textMessage = (TextMessage) message;
-			server.deliverMessage(textMessage);
-			return ChatServerAction.HANDLED_NO_RESPONSE;
+			String response = MessageType.RESPONSE_MESSAGE_FROM.getMessageTypeAsString();
+			response = response.replace("<from>", textMessage.getAuthor().getName());
+			response = response.replace("<to>", textMessage.getRoomName());
+			response = response.replace("<message>", textMessage.getMessage());
+			server.deliverMessageToRoom(new TextMessage(textMessage.getRoomName(), response));
+			return new ChatServerResponse("");
 		}
 		else {
-			return ChatServerAction.NOT_MY_MESSAGE;
+			return new ChatServerResponse();
 		}
 	}
 

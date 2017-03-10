@@ -74,7 +74,7 @@ public class ClientConnection extends Thread {
 	
 	private void sendLine(String line) {
 		output.println(line);
-		logger.trace("Sent line: " + line);
+		logger.info(line);
 	}
 
 	private void processMessages() throws IOException {
@@ -91,7 +91,7 @@ public class ClientConnection extends Thread {
 
 	private ChatMessage getMessage() throws IOException {
 		String line = input.readLine();
-		logger.trace("Read line: " + line);
+		logger.info(line);
 		return ChatMessageParser.parseLine(line);
 	}
 }
