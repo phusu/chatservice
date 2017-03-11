@@ -31,7 +31,7 @@ public class ChatMessageParserTest {
 	public final ExpectedException exception = ExpectedException.none();
 	
 	@Test
-	public void ChatMessageParserParseSimpleMessageTest() {
+	public void ChatMessageParserParseSimpleMessageTest() throws ChatMessageParseException {
 		ChatMessage message = ChatMessageParser.parseLine(MessageType.MESSAGE_TO.getMessageTypeAsString() 
 				+ " " + DESTINATION + " " + CONTENTS);
 		assertTrue(message instanceof TextMessage);
@@ -43,7 +43,7 @@ public class ChatMessageParserTest {
 	}
 	
 	@Test
-	public void ChatMessageParserParseNullMessageTest() {
+	public void ChatMessageParserParseNullMessageTest() throws ChatMessageParseException {
 		exception.expect(NullPointerException.class);
 		exception.expectMessage("Line was null.");
 		ChatMessageParser.parseLine(null);
@@ -51,34 +51,34 @@ public class ChatMessageParserTest {
 
 
 	@Test
-	public void ChatMessageParserParseUnknownMessageTest() {
-		ChatMessage message = ChatMessageParser.parseLine(MessageType.UNKNOWN.getMessageTypeAsString());
+	public void ChatMessageParserParseUnknownMessageTest() throws ChatMessageParseException {
+		ChatMessage message = ChatMessageParser.parseLine(INVALID_MESSAGE);
 		assertTrue(message instanceof UnknownMessage);
 	}
 
 	@Test
-	public void ChatMessageParserParseEmptyMessageTest() {
-		exception.expect(IllegalArgumentException.class);
+	public void ChatMessageParserParseEmptyMessageTest() throws ChatMessageParseException {
+		exception.expect(ChatMessageParseException.class);
 		exception.expectMessage("Empty message.");
 		ChatMessageParser.parseLine(MessageType.MESSAGE_TO.getMessageTypeAsString()  + " " + DESTINATION + " ");
 	}
 
 	@Test
-	public void ChatMessageParserParseEmptyMessage2Test() {
-		exception.expect(IllegalArgumentException.class);
+	public void ChatMessageParserParseEmptyMessage2Test() throws ChatMessageParseException {
+		exception.expect(ChatMessageParseException.class);
 		exception.expectMessage("Empty message.");
 		ChatMessageParser.parseLine(MessageType.MESSAGE_TO.getMessageTypeAsString()  + " " + DESTINATION);
 	}
 	
 	@Test
-	public void ChatMessageParserParseMissingDestinationTest() {
-		exception.expect(IllegalArgumentException.class);
+	public void ChatMessageParserParseMissingDestinationTest() throws ChatMessageParseException {
+		exception.expect(ChatMessageParseException.class);
 		exception.expectMessage("Missing destination.");
 		ChatMessageParser.parseLine(MessageType.MESSAGE_TO.getMessageTypeAsString()  + " ");
 	}
 
 	@Test
-	public void ChatMessageParserParseSetNameTest() {
+	public void ChatMessageParserParseSetNameTest() throws ChatMessageParseException {
 		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_SETNAME.getMessageTypeAsString()  
 				+ " " + COMMAND_SETNAME_ARGUMENTS);
 		assertTrue(message instanceof SetNameMessage);
@@ -90,14 +90,14 @@ public class ChatMessageParserTest {
 	}
 
 	@Test
-	public void ChatMessageParserParseSetNameEmptyTest() {
-		exception.expect(IllegalArgumentException.class);
+	public void ChatMessageParserParseSetNameEmptyTest() throws ChatMessageParseException {
+		exception.expect(ChatMessageParseException.class);
 		exception.expectMessage("Missing arguments.");
 		ChatMessageParser.parseLine(MessageType.COMMAND_SETNAME.getMessageTypeAsString()  + " ");
 	}
 
 	@Test
-	public void ChatMessageParserParseJoinRoomTest() {
+	public void ChatMessageParserParseJoinRoomTest() throws ChatMessageParseException {
 		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_JOIN.getMessageTypeAsString()  + " " + DESTINATION);
 		assertTrue(message instanceof JoinRoomMessage);
 		JoinRoomMessage msg = (JoinRoomMessage) message;
@@ -108,14 +108,14 @@ public class ChatMessageParserTest {
 	}
 
 	@Test
-	public void ChatMessageParserParseJoinRoomEmptyTest() {
-		exception.expect(IllegalArgumentException.class);
+	public void ChatMessageParserParseJoinRoomEmptyTest() throws ChatMessageParseException {
+		exception.expect(ChatMessageParseException.class);
 		exception.expectMessage("Missing arguments.");
 		ChatMessageParser.parseLine(MessageType.COMMAND_JOIN.getMessageTypeAsString()  + " ");
 	}
 
 	@Test
-	public void ChatMessageParserParseLeaveRoomTest() {
+	public void ChatMessageParserParseLeaveRoomTest() throws ChatMessageParseException {
 		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_LEAVE.getMessageTypeAsString()  + " " + DESTINATION);
 		assertTrue(message instanceof LeaveRoomMessage);
 		LeaveRoomMessage msg = (LeaveRoomMessage) message;
@@ -126,14 +126,14 @@ public class ChatMessageParserTest {
 	}
 
 	@Test
-	public void ChatMessageParserParseLeaveRoomEmptyTest() {
-		exception.expect(IllegalArgumentException.class);
+	public void ChatMessageParserParseLeaveRoomEmptyTest() throws ChatMessageParseException {
+		exception.expect(ChatMessageParseException.class);
 		exception.expectMessage("Missing arguments.");
 		ChatMessageParser.parseLine(MessageType.COMMAND_LEAVE.getMessageTypeAsString()  + " ");
 	}
 
 	@Test
-	public void ChatMessageParserParseListRoomsTest() {
+	public void ChatMessageParserParseListRoomsTest() throws ChatMessageParseException {
 		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_LISTROOMS.getMessageTypeAsString());
 		assertTrue(message instanceof ListRoomsMessage);
 		ListRoomsMessage msg = (ListRoomsMessage) message;
@@ -143,7 +143,7 @@ public class ChatMessageParserTest {
 	
 
 	@Test
-	public void ChatMessageParserParseQuitTest() {
+	public void ChatMessageParserParseQuitTest() throws ChatMessageParseException {
 		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_QUIT.getMessageTypeAsString());
 		assertTrue(message instanceof QuitMessage);
 		QuitMessage msg = (QuitMessage) message;
@@ -152,7 +152,7 @@ public class ChatMessageParserTest {
 	}
 	
 	@Test
-	public void ChatMessageParseMessageAuthorConnectionTest() {
+	public void ChatMessageParseMessageAuthorConnectionTest() throws ChatMessageParseException {
 		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_LEAVE.getMessageTypeAsString()  + " " + DESTINATION);
 		ChatUser user = mock(SimpleChatUser.class);
 		ClientConnection connection = mock(ClientConnection.class);

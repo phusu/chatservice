@@ -37,11 +37,10 @@ public class JoinRoomMessageHandler implements IChatMessageHandler {
 				textMessage.setClientConnection(author.getClientConnection());
 				server.deliverMessageToRoom(textMessage);
 				
-				String response = MessageType.RESPONSE_JOIN_OK.getMessageTypeAsString().replace("<room>", roomName);
-				return new ChatServerResponse(response);
+				return new ChatServerResponse("");
 			}
 			else {
-				String response = MessageType.RESPONSE_JOIN_NOT_VALID.getMessageTypeAsString().replace("<room>", roomName);
+				String response = MessageType.RESPONSE_JOIN_NOT_VALID.getMessageTypeAsString().replace("<message>", roomName);
 				return new ChatServerResponse(response);
 			}
 		}

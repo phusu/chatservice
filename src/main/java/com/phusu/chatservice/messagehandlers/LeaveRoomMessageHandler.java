@@ -36,11 +36,11 @@ public class LeaveRoomMessageHandler implements IChatMessageHandler {
 				textMessage.setClientConnection(author.getClientConnection());
 				server.deliverMessageToRoom(textMessage);
 				
-				String response = MessageType.RESPONSE_LEAVE_OK.getMessageTypeAsString().replace("<room>", roomName);
+				String response = MessageType.RESPONSE_LEAVE_OK.getMessageTypeAsString().replace("<message>", roomName);
 				return new ChatServerResponse(response);	
 			}
 			else {
-				String response = MessageType.RESPONSE_LEAVE_NOT_VALID.getMessageTypeAsString().replace("<room>", roomName);
+				String response = MessageType.RESPONSE_LEAVE_NOT_VALID.getMessageTypeAsString().replace("<message>", roomName);
 				return new ChatServerResponse(response);	
 			}
 		}

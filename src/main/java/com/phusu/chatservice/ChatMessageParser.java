@@ -14,7 +14,7 @@ import com.phusu.chatservice.messages.UnknownMessage;
  * ChatMessageParser parses incoming messages from client.
  */
 public class ChatMessageParser {
-	public static ChatMessage parseLine(String line) {
+	public static ChatMessage parseLine(String line) throws ChatMessageParseException {
 		if (line == null)
 			throw new NullPointerException("Line was null.");
 		
@@ -40,7 +40,7 @@ public class ChatMessageParser {
 		return new UnknownMessage();
 	}
 
-	private static TextMessage parseTextMessage(String line) {
+	private static TextMessage parseTextMessage(String line) throws ChatMessageParseException {
 		String room;
 		String message;
 		
@@ -48,32 +48,37 @@ public class ChatMessageParser {
 				+ MessageType.MESSAGE_TO.getMessageTypeAsString().length() + 1;
 		
 		if (roomStartIndex == line.length())
-			throw new IllegalArgumentException("Missing destination.");
+			throw new ChatMessageParseException(MessageType.MESSAGE_TO, "Missing destination.");
 		
 		int roomEndIndex = line.indexOf(" ", roomStartIndex);
 		
 		if (roomEndIndex == -1) 
-			throw new IllegalArgumentException("Empty message.");
+			throw new ChatMessageParseException(MessageType.MESSAGE_TO, "Empty message.");
 		
 		room = line.substring(roomStartIndex, roomEndIndex);
 		int messageStartIndex = roomEndIndex + 1;
 		message = line.substring(messageStartIndex);
 		
 		if (message.length() == 0)
-			throw new IllegalArgumentException("Empty message.");
+			throw new ChatMessageParseException(MessageType.MESSAGE_TO, "Empty message.");
 		
 		return new TextMessage(room, message);
 	}
 
-	private static String parseArguments(MessageType type, String line) {
+	private static String parseArguments(MessageType type, String line) throws ChatMessageParseException  {
 		String arguments;
 		int argumentsStart = line.indexOf(type.getMessageTypeAsString()) 
 				+ type.getMessageTypeAsString().length() + 1;
 		
 		if (argumentsStart >= line.length())
-			throw new IllegalArgumentException("Missing arguments.");
+			throw new ChatMessageParseException(type, "Missing arguments.");
 		
-		arguments = line.substring(argumentsStart);
+		int argumentsEnd = line.indexOf(" ", argumentsStart);
+		if (argumentsEnd == -1) {
+			argumentsEnd = line.length();
+		}
+		
+		arguments = line.substring(argumentsStart, argumentsEnd);
 		return arguments;
 	}
 }

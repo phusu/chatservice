@@ -1,5 +1,6 @@
 package com.phusu.chatservice;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -53,7 +54,7 @@ public class ChatRoom {
 	}
 
 	public Set<ChatUser> getUsers() {
-		return users;
+		return Collections.unmodifiableSet(users);
 	}
 	
 	public boolean addUserIfUnique(ChatUser user) {

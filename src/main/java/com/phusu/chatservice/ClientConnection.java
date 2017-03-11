@@ -59,7 +59,7 @@ public class ClientConnection extends Thread {
 			output = new PrintWriter(socket.getOutputStream(), true);
 			
 			getValidUserName();
-			processMessages();
+			processMessageLoop();
 			
 		}
 		catch (IOException e) {
@@ -77,7 +77,13 @@ public class ClientConnection extends Thread {
 		boolean userNameIsValid = false;
 		while (!userNameIsValid) {
 			sendLine("SETNAME");
-			ChatMessage message = getMessage();
+			ChatMessage message;
+			try {
+				message = getMessage();
+			}
+			catch (ChatMessageParseException e) {
+				continue;
+			}
 			if (message instanceof SetNameMessage) {
 				message.setClientConnection(this);
 				String response = server.handleMessage(this, message);
@@ -94,21 +100,28 @@ public class ClientConnection extends Thread {
 		logger.info(line);
 	}
 
-	private void processMessages() throws IOException {
+	private void processMessageLoop() throws IOException {
 		while (!connectionClosed) {
-			ChatMessage message = getMessage();
-			message.setClientConnection(this);
-			message.setAuthor(user);
-			String response = server.handleMessage(this, message);
-			if (!response.isEmpty()) {
+			try {
+				ChatMessage message = getMessage();
+				String response = server.handleMessage(this, message);
+				if (!response.isEmpty()) {
+					sendLine(response);
+				}
+			}
+			catch (ChatMessageParseException e) {
+				String response = e.getMessageType().getMessageTypeAsString().replace("<message>", e.getMessage());
 				sendLine(response);
 			}
 		}
 	}
 
-	private ChatMessage getMessage() throws IOException {
+	private ChatMessage getMessage() throws IOException, ChatMessageParseException {
 		String line = input.readLine();
 		logger.info(line);
-		return ChatMessageParser.parseLine(line);
+		ChatMessage message = ChatMessageParser.parseLine(line); 
+		message.setClientConnection(this);
+		message.setAuthor(user);
+		return message;
 	}
 }

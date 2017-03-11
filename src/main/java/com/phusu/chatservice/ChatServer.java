@@ -26,9 +26,9 @@ import com.phusu.chatservice.messages.TextMessage;
  * Supported commands from client->server	|	Responses from server->client
  * -----------------------------------------|-----------------------------------------
  * MESSAGE TO roomname message				| <MESSAGE FROM user TO roomname message>
- * COMMAND SETNAME name						| <RESPONSE SETNAME OK> or <RESPONSE SETNAME NOT VALID>
- * COMMAND JOIN roomname					| <RESPONSE JOIN roomname OK> or <RESPONSE JOIN roomname NOT EXIST>
- * COMMAND LEAVE roomname					| <RESPONSE LEAVE roomname OK> or <RESPONSE LEAVE roomname NOT EXIST>
+ * COMMAND SETNAME name						| <RESPONSE OK SETNAME> or <RESPONSE NOT VALID SETNAME>
+ * COMMAND JOIN roomname					| <RESPONSE OK JOIN roomname> or <RESPONSE NOT EXIST JOIN roomname>
+ * COMMAND LEAVE roomname					| <RESPONSE OK LEAVE roomname> or <RESPONSE NOT EXIST LEAVE roomname>
  * COMMAND LISTROOMS						| <RESPONSE LISTROOMS room1 room2 room3 ... roomn>
  * COMMAND QUIT								| no response
  *  
@@ -160,10 +160,20 @@ public class ChatServer implements Runnable {
 			if (!isInTheSet) {
 				throw new IllegalArgumentException("User doesn't exist.");
 			} else {
-				for (ChatRoom chatRoom : chatRooms.values()) {
-					chatRoom.removeUserIfExists(user);
+				Set<String> roomNames = new HashSet<>();
+				synchronized (chatRooms) {
+					for (ChatRoom chatRoom : chatRooms.values()) {
+						chatRoom.removeUserIfExists(user);
+						if (chatRoom.getUsers().isEmpty()) {
+							roomNames.add(chatRoom.getName());
+						}
+					}
+					for (String roomName : roomNames) {
+						chatRooms.remove(roomName);
+						logger.trace("Room " + roomName + " removed.");
+						logger.trace(chatRooms);
+					}
 				}
-				
 				logger.trace("User " + user.getName() + " removed.");
 				logger.trace(users);
 			}

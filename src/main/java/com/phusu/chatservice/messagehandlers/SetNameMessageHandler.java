@@ -24,11 +24,14 @@ public class SetNameMessageHandler implements IChatMessageHandler {
 			
 			if (isUnique) {
 				message.getClientConnection().setUser(user);
-				String response = MessageType.RESPONSE_SETNAME_OK.getMessageTypeAsString().replace("<name>", setNameMessage.getUserName());
+				message.setAuthor(user);
+				String response = MessageType.RESPONSE_SETNAME_OK.getMessageTypeAsString().replace("<name>", 
+						setNameMessage.getUserName());
 				return new ChatServerResponse(response);
 			}
 			else {
-				String response = MessageType.RESPONSE_SETNAME_NOT_VALID.getMessageTypeAsString().replace("<name>", setNameMessage.getUserName());
+				String response = MessageType.RESPONSE_SETNAME_NOT_VALID.getMessageTypeAsString().replace("<message>", 
+						setNameMessage.getUserName());
 				return new ChatServerResponse(response);
 			}
 		}

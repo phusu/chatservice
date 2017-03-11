@@ -17,7 +17,7 @@ public class ChatServiceIntegrationTest {
 	@Test
 	public void test() {
 		ChatServer server = new ChatServer();
-		Thread serverThread = new Thread(server, "Server");
+		Thread serverThread = new Thread(server);
 		serverThread.start();
 		
 		TestClient client1 = new TestClient();
@@ -42,37 +42,95 @@ public class ChatServiceIntegrationTest {
 		@Override
 		public void run() {
 			try {
-				runClient();
+				testSettingUserName();
+				Thread.sleep(100);
+				testCreatingGroups();
 			}
-			catch (Exception e) {
+			catch (InterruptedException e) {
 				
 			}
 		}
 
-		private void runClient() throws IOException {
-			Socket socket = new Socket("localhost", 9001);
-			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			out = new PrintWriter(socket.getOutputStream(), true);
-			
-			logger.debug("Socket created");
-			
-			String line = readLine();
-			assertTrue(line.equals("SETNAME"));
-			writeLine("aervblekmrgj");
-			
-			line = readLine();
-			assertTrue(line.equals("SETNAME"));
-			writeLine("MESSAGE TO general Testing one two three");
+		private void testSettingUserName() {
+			try (Socket socket = new Socket("localhost", 9001)) {
+				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				out = new PrintWriter(socket.getOutputStream(), true);
+				
+				logger.debug("Socket created");
+				
+				String line = readLine();
+				assertTrue(line.equals("SETNAME"));
+				writeLine("aervblekmrgj");
+				
+				line = readLine();
+				assertTrue(line.equals("SETNAME"));
+				writeLine("MESSAGE TO general Testing one two three");
+	
+				line = readLine();
+				assertTrue(line.equals("SETNAME"));
+				writeLine("COMMAND SETNAME foo");
+				
+				line = readLine();
+				assertTrue(line.equals("RESPONSE OK SETNAME foo"));
+				
+				writeLine("COMMAND QUIT");
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		private void testCreatingGroups() {
+			try (Socket socket = new Socket("localhost", 9001)) {
+				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				out = new PrintWriter(socket.getOutputStream(), true);
+				
+				logger.debug("Socket created");
+				
+				String line = readLine();
+				assertTrue(line.equals("SETNAME"));
+				writeLine("COMMAND SETNAME foo");
+				
+				line = readLine();
+				assertTrue(line.equals("RESPONSE OK SETNAME foo"));
+				
+				writeLine("COMMAND LISTROOMS");
+				line = readLine();
+				assertTrue(line.equals("RESPONSE LISTROOMS"));
+				
+				writeLine("COMMAND JOIN");
+				line = readLine();
+				assertTrue(line.equals("RESPONSE NOT VALID JOIN Missing arguments."));
+				
+				writeLine("COMMAND JOIN general");
+				line = readLine();
+				assertTrue(line.equals("MESSAGE FROM foo TO general foo joined!"));
+				
+				writeLine("COMMAND JOIN random");
+				line = readLine();
+				assertTrue(line.equals("MESSAGE FROM foo TO random foo joined!"));
+				
+				writeLine("MESSAGE TO general test message to general channel");
+				line = readLine();
+				assertTrue(line.equals("MESSAGE FROM foo TO general test message to general channel"));
+				
+				writeLine("MESSAGE TO random test message to random channel");
+				line = readLine();
+				assertTrue(line.equals("MESSAGE FROM foo TO random test message to random channel"));
+				
+				writeLine("COMMAND LEAVE random");
+				line = readLine();
+				assertTrue(line.equals("RESPONSE OK LEAVE random"));
 
-			line = readLine();
-			assertTrue(line.equals("SETNAME"));
-			writeLine("COMMAND SETNAME foo");
-			
-			line = readLine();
-			assertTrue(line.equals("RESPONSE OK SETNAME foo"));
-			
-			writeLine("COMMAND QUIT");
-			socket.close();
+				writeLine("COMMAND LEAVE generalchat");
+				line = readLine();
+				assertTrue(line.equals("RESPONSE NOT VALID LEAVE generalchat"));
+				
+				writeLine("COMMAND QUIT");
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		private String readLine() throws IOException {

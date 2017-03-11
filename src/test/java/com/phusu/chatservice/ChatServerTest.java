@@ -219,12 +219,12 @@ public class ChatServerTest {
 
 		assertTrue(server.listUsersInRoom(ROOM_NAME) == null);
 
-		String expected = MessageType.RESPONSE_JOIN_OK.getMessageTypeAsString().replace("<room>", ROOM_NAME);
+		String expected = MessageType.RESPONSE_JOIN_OK.getMessageTypeAsString().replace("<message>", ROOM_NAME);
 		String response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
 		assertFalse(server.listUsersInRoom(ROOM_NAME).isEmpty());
 		
-		expected = MessageType.RESPONSE_JOIN_NOT_VALID.getMessageTypeAsString().replace("<room>", ROOM_NAME);
+		expected = MessageType.RESPONSE_JOIN_NOT_VALID.getMessageTypeAsString().replace("<message>", ROOM_NAME);
 		response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
 		assertTrue(server.listUsersInRoom(ROOM_NAME).size() == 1);
@@ -245,7 +245,7 @@ public class ChatServerTest {
 		
 		assertTrue(message.getAuthor() == user);
 		
-		String expected = MessageType.RESPONSE_LEAVE_NOT_VALID.getMessageTypeAsString().replace("<room>", ROOM_NAME);
+		String expected = MessageType.RESPONSE_LEAVE_NOT_VALID.getMessageTypeAsString().replace("<message>", ROOM_NAME);
 		String response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
 		assertTrue(server.listUsersInRoom(ROOM_NAME) == null);
@@ -255,7 +255,7 @@ public class ChatServerTest {
 		assertTrue(server.addUserToRoom(user, ROOM_NAME));
 		assertFalse(server.listUsersInRoom(ROOM_NAME).isEmpty());
 		
-		expected = MessageType.RESPONSE_LEAVE_OK.getMessageTypeAsString().replace("<room>", ROOM_NAME);
+		expected = MessageType.RESPONSE_LEAVE_OK.getMessageTypeAsString().replace("<message>", ROOM_NAME);
 		response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
 		assertTrue(server.listUsersInRoom(ROOM_NAME) == null);
@@ -315,7 +315,7 @@ public class ChatServerTest {
 		String response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
 
-		expected = MessageType.RESPONSE_SETNAME_NOT_VALID.getMessageTypeAsString().replace("<name>", message2.getUserName());
+		expected = MessageType.RESPONSE_SETNAME_NOT_VALID.getMessageTypeAsString().replace("<message>", message2.getUserName());
 		response = server.handleMessage(connection2, message2);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
 	}
@@ -366,10 +366,21 @@ public class ChatServerTest {
 		ChatServer server = new ChatServer();
 		ClientConnection connection = mock(ClientConnection.class);
 		
-		QuitMessage message = mock(QuitMessage.class);
-		when(message.getClientConnection()).thenReturn(connection);
+		SetNameMessage message = new SetNameMessage(USER_NAME_FOO);
+		message.setClientConnection(connection);
 		
+		String expected = MessageType.RESPONSE_SETNAME_OK.getMessageTypeAsString().replace("<name>", message.getUserName());
 		String response = server.handleMessage(connection, message);
+		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
+		
+		assertFalse(server.listUsers().isEmpty());
+		
+		QuitMessage quitMessage = mock(QuitMessage.class);
+		when(quitMessage.getClientConnection()).thenReturn(connection);
+		when(quitMessage.getAuthor()).thenReturn(message.getAuthor());
+		
+		response = server.handleMessage(connection, quitMessage);
+		assertTrue(server.listUsers().isEmpty());
 		assertTrue(response.isEmpty());
 	}
 	
