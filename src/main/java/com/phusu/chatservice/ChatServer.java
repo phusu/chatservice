@@ -33,7 +33,7 @@ import com.phusu.chatservice.messages.TextMessage;
  * COMMAND QUIT								| no response
  *  
  */
-public class ChatServer {
+public class ChatServer implements Runnable {
 	private Map<String, ChatRoom> chatRooms;
 	private Set<ChatUser> users;
 	private Collection<ClientConnection> connections;
@@ -43,6 +43,8 @@ public class ChatServer {
 	private static final Logger logger = LogManager.getLogger(ChatServer.class);
 	
 	private final static int PORT = 9001;
+	private ServerSocket serverSocket;
+	private boolean serverIsRunning = false;
 	
 	public ChatServer() {
 		logger.trace("ChatServer created");
@@ -242,27 +244,30 @@ public class ChatServer {
 		}
 	}
 	
-	public void start() {
+	public void run() {
 		logger.trace("ChatServer started");
+		serverIsRunning = true;
 		
-		try (ServerSocket listener = new ServerSocket(PORT)) {
-			while (true) {
-				Socket socket = listener.accept();
+		try {
+			serverSocket = new ServerSocket(PORT);
+			while (serverIsRunning) {
+				Socket socket = serverSocket.accept();
 				ClientConnection connection = new ClientConnection(socket, this);
 				this.addConnection(connection);
 				connection.start();
 			}
+			serverSocket.close();
 		} 
 		catch (IOException e) {
 			logger.catching(e);
 		}
 		finally {
-			logger.trace("ChatServer stopping");
+			logger.trace("ChatServer stopped");
 		}
 	}
 	
-	public static void main(String[] args) {
-		ChatServer server = new ChatServer();
-		server.start();
+	public void stop() {
+		logger.trace("ChatServer stopping");
+		serverIsRunning = false;
 	}
 }

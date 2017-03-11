@@ -16,11 +16,21 @@ public class ChatServiceIntegrationTest {
 
 	@Test
 	public void test() {
-		TestClient client1 = new TestClient();
-		new Thread(client1, "Client 1").start();
-		
 		ChatServer server = new ChatServer();
-		server.start();
+		Thread serverThread = new Thread(server, "Server");
+		serverThread.start();
+		
+		TestClient client1 = new TestClient();
+		Thread thread1 = new Thread(client1, "Client 1");
+		thread1.start();
+		try {
+			thread1.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		finally {
+			server.stop();	
+		}
 	}
 	
 	private class TestClient implements Runnable {
