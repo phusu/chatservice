@@ -11,8 +11,10 @@ import com.phusu.chatservice.messages.JoinRoomMessage;
 import com.phusu.chatservice.messages.LeaveRoomMessage;
 import com.phusu.chatservice.messages.ListRoomsMessage;
 import com.phusu.chatservice.messages.MessageType;
+import com.phusu.chatservice.messages.QuitMessage;
 import com.phusu.chatservice.messages.SetNameMessage;
 import com.phusu.chatservice.messages.TextMessage;
+import com.phusu.chatservice.messages.UnknownMessage;
 
 /**
  * Unit tests for ChatServer.
@@ -221,6 +223,11 @@ public class ChatServerTest {
 		String response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
 		assertFalse(server.listUsersInRoom(ROOM_NAME).isEmpty());
+		
+		expected = MessageType.RESPONSE_JOIN_NOT_VALID.getMessageTypeAsString().replace("<room>", ROOM_NAME);
+		response = server.handleMessage(connection, message);
+		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
+		assertTrue(server.listUsersInRoom(ROOM_NAME).size() == 1);
 	}
 	
 	@Test
@@ -237,14 +244,19 @@ public class ChatServerTest {
 		when(message.getAuthor()).thenReturn(user);
 		
 		assertTrue(message.getAuthor() == user);
+		
+		String expected = MessageType.RESPONSE_LEAVE_NOT_VALID.getMessageTypeAsString().replace("<room>", ROOM_NAME);
+		String response = server.handleMessage(connection, message);
+		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
+		assertTrue(server.listUsersInRoom(ROOM_NAME) == null);
 
 		assertTrue(server.addUserIfUnique(user));
 		server.createRoomIfUnique(ROOM_NAME, ChatRoomType.PUBLIC);
 		assertTrue(server.addUserToRoom(user, ROOM_NAME));
 		assertFalse(server.listUsersInRoom(ROOM_NAME).isEmpty());
 		
-		String expected = MessageType.RESPONSE_LEAVE_OK.getMessageTypeAsString().replace("<room>", ROOM_NAME);
-		String response = server.handleMessage(connection, message);
+		expected = MessageType.RESPONSE_LEAVE_OK.getMessageTypeAsString().replace("<room>", ROOM_NAME);
+		response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
 		assertTrue(server.listUsersInRoom(ROOM_NAME) == null);
 	}
@@ -334,6 +346,31 @@ public class ChatServerTest {
 		assertTrue(response.isEmpty());
 		
 		// TODO Would need a way to test what is written to ClientConnection's socket's output stream
+	}
+	
+	@Test
+	public void ChatServerHandleUnknownMessageTest() {
+		ChatServer server = new ChatServer();
+		ClientConnection connection = mock(ClientConnection.class);
+		
+		UnknownMessage message = mock(UnknownMessage.class);
+		when(message.getClientConnection()).thenReturn(connection);
+		
+		String expected = MessageType.UNKNOWN.getMessageTypeAsString();
+		String response = server.handleMessage(connection, message);
+		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
+	}
+	
+	@Test
+	public void ChatServerHandleQuitMessageTest() {
+		ChatServer server = new ChatServer();
+		ClientConnection connection = mock(ClientConnection.class);
+		
+		QuitMessage message = mock(QuitMessage.class);
+		when(message.getClientConnection()).thenReturn(connection);
+		
+		String response = server.handleMessage(connection, message);
+		assertTrue(response.isEmpty());
 	}
 	
 	@Test

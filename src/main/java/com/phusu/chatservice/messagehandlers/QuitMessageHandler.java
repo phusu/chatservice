@@ -18,7 +18,7 @@ public class QuitMessageHandler implements IChatMessageHandler {
 		if (message instanceof QuitMessage) {
 			server.removeConnection(message.getClientConnection());
 			message.getClientConnection().closeConnection();
-			return new ChatServerResponse();
+			return new ChatServerResponse("");
 		}
 		else {
 			return new ChatServerResponse();

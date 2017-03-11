@@ -15,6 +15,7 @@ import com.phusu.chatservice.messages.MessageType;
 import com.phusu.chatservice.messages.QuitMessage;
 import com.phusu.chatservice.messages.SetNameMessage;
 import com.phusu.chatservice.messages.TextMessage;
+import com.phusu.chatservice.messages.UnknownMessage;
 
 /**
  * Unit tests for ChatMessageParser.
@@ -50,10 +51,9 @@ public class ChatMessageParserTest {
 
 
 	@Test
-	public void ChatMessageParserParseInvalidMessageTest() {
-		exception.expect(IllegalArgumentException.class);
-		exception.expectMessage("Unknown command.");
-		ChatMessageParser.parseLine(INVALID_MESSAGE);
+	public void ChatMessageParserParseUnknownMessageTest() {
+		ChatMessage message = ChatMessageParser.parseLine(MessageType.UNKNOWN.getMessageTypeAsString());
+		assertTrue(message instanceof UnknownMessage);
 	}
 
 	@Test
