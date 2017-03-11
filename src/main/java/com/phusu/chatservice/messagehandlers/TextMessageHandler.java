@@ -18,12 +18,25 @@ public class TextMessageHandler implements IChatMessageHandler {
 	public ChatServerResponse handleMessage(ChatMessage message) {
 		if (message instanceof TextMessage) {
 			TextMessage textMessage = (TextMessage) message;
+			String roomName = textMessage.getRoomName();
+			String userName = textMessage.getAuthor().getName();
+			String messageString = textMessage.getMessage();
+			
 			String response = MessageType.RESPONSE_MESSAGE_FROM.getMessageTypeAsString();
-			response = response.replace("<from>", textMessage.getAuthor().getName());
-			response = response.replace("<to>", textMessage.getRoomName());
-			response = response.replace("<message>", textMessage.getMessage());
-			server.deliverMessageToRoom(new TextMessage(textMessage.getRoomName(), response));
-			return new ChatServerResponse("");
+			response = response.replace("<from>", userName);
+			response = response.replace("<to>", roomName);
+			response = response.replace("<message>", messageString);
+			
+			textMessage = new TextMessage(roomName, response);
+			boolean succeeded = server.deliverMessageToRoom(textMessage);
+			if (succeeded) {
+				return new ChatServerResponse("");
+			}
+			else {
+				response = MessageType.RESPONSE_MESSAGE_NOT_VALID.getMessageTypeAsString();
+				response = response.replace("<message>", "Room " + roomName + " not found");
+				return new ChatServerResponse(response);
+			}
 		}
 		else {
 			return new ChatServerResponse();

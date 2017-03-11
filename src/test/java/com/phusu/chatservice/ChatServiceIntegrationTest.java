@@ -44,7 +44,7 @@ public class ChatServiceIntegrationTest {
 			try {
 				testSettingUserName();
 				Thread.sleep(100);
-				testCreatingGroups();
+				testCreatingGroupsAndMessaging();
 			}
 			catch (InterruptedException e) {
 				
@@ -73,6 +73,10 @@ public class ChatServiceIntegrationTest {
 				line = readLine();
 				assertTrue(line.equals("RESPONSE OK SETNAME foo"));
 				
+				writeLine("COMMAND SETNAME bar");
+				line = readLine();
+				assertTrue(line.equals("NOT IMPLEMENTED"));
+				
 				writeLine("COMMAND QUIT");
 			}
 			catch (IOException e) {
@@ -80,7 +84,7 @@ public class ChatServiceIntegrationTest {
 			}
 		}
 		
-		private void testCreatingGroups() {
+		private void testCreatingGroupsAndMessaging() {
 			try (Socket socket = new Socket("localhost", 9001)) {
 				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				out = new PrintWriter(socket.getOutputStream(), true);
@@ -117,6 +121,10 @@ public class ChatServiceIntegrationTest {
 				writeLine("MESSAGE TO random test message to random channel");
 				line = readLine();
 				assertTrue(line.equals("MESSAGE FROM foo TO random test message to random channel"));
+
+				writeLine("MESSAGE TO generalchat test message to generalchat channel");
+				line = readLine();
+				assertTrue(line.equals("MESSAGE NOT VALID Room generalchat not found"));
 				
 				writeLine("COMMAND LEAVE random");
 				line = readLine();
@@ -125,6 +133,14 @@ public class ChatServiceIntegrationTest {
 				writeLine("COMMAND LEAVE generalchat");
 				line = readLine();
 				assertTrue(line.equals("RESPONSE NOT VALID LEAVE generalchat"));
+
+				writeLine("COMMAND LEAVE general");
+				line = readLine();
+				assertTrue(line.equals("RESPONSE OK LEAVE general"));
+
+				writeLine("COMMAND LISTROOMS");
+				line = readLine();
+				assertTrue(line.equals("RESPONSE LISTROOMS"));
 				
 				writeLine("COMMAND QUIT");
 			}
