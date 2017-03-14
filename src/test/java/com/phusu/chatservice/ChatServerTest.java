@@ -176,7 +176,8 @@ public class ChatServerTest {
 		assertTrue(server.listUsers().size() == 1);
 		server.removeUser(user);
 		assertTrue(server.listUsers().size() == 0);
-		assertTrue(server.listUsersInRoom(ROOM_NAME + " 2").size() == 0);
+		assertTrue(server.listUsersInRoom(ROOM_NAME + " 2") == null);
+		server.createRoomIfUnique(ROOM_NAME + " 2", ChatRoomType.PUBLIC);
 		
 		assertTrue(server.addUserIfUnique(user));
 		assertTrue(server.addUserToRoom(user, ROOM_NAME + " 1"));
@@ -219,7 +220,7 @@ public class ChatServerTest {
 
 		assertTrue(server.listUsersInRoom(ROOM_NAME) == null);
 
-		String expected = MessageType.RESPONSE_JOIN_OK.getMessageTypeAsString().replace("<message>", ROOM_NAME);
+		String expected = "";
 		String response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
 		assertFalse(server.listUsersInRoom(ROOM_NAME).isEmpty());

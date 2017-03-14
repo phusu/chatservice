@@ -163,8 +163,8 @@ public class ChatServer implements Runnable {
 				Set<String> roomNames = new HashSet<>();
 				synchronized (chatRooms) {
 					for (ChatRoom chatRoom : chatRooms.values()) {
-						chatRoom.removeUserIfExists(user);
-						if (chatRoom.getUsers().isEmpty()) {
+						boolean removed = chatRoom.removeUserIfExists(user);
+						if (removed && chatRoom.getUsers().isEmpty()) {
 							roomNames.add(chatRoom.getName());
 						}
 					}
