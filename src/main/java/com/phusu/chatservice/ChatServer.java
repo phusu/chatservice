@@ -280,4 +280,10 @@ public class ChatServer implements Runnable {
 		logger.trace("ChatServer stopping");
 		serverIsRunning = false;
 	}
+	
+	public static void main(String[] args) {
+		ChatServer server = new ChatServer();
+		Thread serverThread = new Thread(server, "server");
+		serverThread.start();
+	}
 }
