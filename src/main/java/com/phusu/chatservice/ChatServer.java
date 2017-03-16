@@ -50,7 +50,7 @@ public class ChatServer implements Runnable {
 		logger.trace("ChatServer created");
 		this.chatRooms = new HashMap<String, ChatRoom>();
 		this.users = new HashSet<ChatUser>();
-		this.connections = new ArrayList<ClientConnection>();
+		this.connections = Collections.synchronizedList(new ArrayList<ClientConnection>());
 		this.publicRoomNames = new HashSet<String>();
 		this.messageHandlers = new ArrayList<IChatMessageHandler>();
 		this.messageHandlers.add(new TextMessageHandler(this));
@@ -99,7 +99,7 @@ public class ChatServer implements Runnable {
 			if (roomExists) {
 				ChatRoom room = chatRooms.get(roomName);
 				
-				if (room.getUsers().isEmpty()) {
+				if (room.isEmpty()) {
 					room = chatRooms.remove(roomName);
 					if (room.getType() == ChatRoomType.PUBLIC) {
 						synchronized (publicRoomNames) {
@@ -119,22 +119,35 @@ public class ChatServer implements Runnable {
 		}
 	}
 	
-	public Set<ChatUser> listUsers() {
-		return Collections.unmodifiableSet(users);
-	}
-	
-	public Set<ChatUser> listUsersInRoom(String roomName) {
+	public boolean containsRoom(String roomName) {
 		if (roomName == null)
 			throw new NullPointerException("Room name was null.");
 		
+		boolean roomExists = false;
 		synchronized (chatRooms) {
-			boolean roomExists = chatRooms.containsKey(roomName);
-			if (roomExists) {
-				ChatRoom room = chatRooms.get(roomName);
-				return room.getUsers();
-			}
+			roomExists = chatRooms.containsKey(roomName);
 		}
-		return null;
+		
+		return roomExists;
+	}
+	
+	public int roomSize(String roomName) {
+		if (roomName == null)
+			throw new NullPointerException("Room was null.");
+		
+		int size = -1;
+		if (!containsRoom(roomName))
+			return size;
+		
+		synchronized (chatRooms) {
+			size = chatRooms.get(roomName).size();
+		}
+		
+		return size;
+	}
+	
+	public Set<ChatUser> listUsersInServer() {
+		return Collections.unmodifiableSet(users);
 	}
 	
 	public boolean addUserIfUnique(ChatUser user) {
@@ -164,7 +177,7 @@ public class ChatServer implements Runnable {
 				synchronized (chatRooms) {
 					for (ChatRoom chatRoom : chatRooms.values()) {
 						boolean removed = chatRoom.removeUserIfExists(user);
-						if (removed && chatRoom.getUsers().isEmpty()) {
+						if (removed && chatRoom.isEmpty()) {
 							roomNames.add(chatRoom.getName());
 						}
 					}
@@ -218,10 +231,7 @@ public class ChatServer implements Runnable {
 		String chatRoomName = message.getRoomName();
 		String chatMessage = message.getMessage();
 		if (chatRooms.containsKey(chatRoomName)) {
-			Set<ChatUser> users = chatRooms.get(chatRoomName).getUsers();
-			for (ChatUser chatUser : users) {
-				chatUser.getClientConnection().deliverMessage(chatMessage);
-			}
+			chatRooms.get(chatRoomName).deliverMessage(chatMessage);
 			
 			logger.trace("Delivered to: " + chatRoomName + ", message: " + chatMessage);
 			
@@ -263,15 +273,21 @@ public class ChatServer implements Runnable {
 			while (serverIsRunning) {
 				Socket socket = serverSocket.accept();
 				ClientConnection connection = new ClientConnection(socket, this);
-				this.addConnection(connection);
+				addConnection(connection);
 				connection.start();
 			}
 			serverSocket.close();
 		} 
 		catch (IOException e) {
-			logger.catching(e);
+			//logger.catching(e);
 		}
 		finally {
+			try {
+				if (serverSocket != null) {
+					serverSocket.close();
+				}
+			} catch (IOException e) {
+			}
 			logger.trace("ChatServer stopped");
 		}
 	}

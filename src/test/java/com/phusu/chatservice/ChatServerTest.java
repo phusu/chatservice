@@ -95,7 +95,7 @@ public class ChatServerTest {
 	@Test
 	public void ChatServerListUsersTest() {
 		ChatServer server = new ChatServer();
-		assertTrue(server.listUsers().size() == 0);
+		assertTrue(server.listUsersInServer().size() == 0);
 	}
 	
 	@Test
@@ -103,7 +103,7 @@ public class ChatServerTest {
 		ChatServer server = new ChatServer();
 		ChatUser user = mock(ChatUser.class);
 		assertTrue(server.addUserIfUnique(user));
-		assertTrue(server.listUsers().size() == 1);
+		assertTrue(server.listUsersInServer().size() == 1);
 	}
 	
 	@Test
@@ -113,9 +113,9 @@ public class ChatServerTest {
 		ChatUser user2 = new SimpleChatUser(null, USER_NAME_FOO);
 		assertTrue(user.equals(user2));
 		assertTrue(server.addUserIfUnique(user));
-		assertTrue(server.listUsers().size() == 1);
+		assertTrue(server.listUsersInServer().size() == 1);
 		assertFalse(server.addUserIfUnique(user2));
-		assertTrue(server.listUsers().size() == 1);
+		assertTrue(server.listUsersInServer().size() == 1);
 	}
 
 	@Test
@@ -131,9 +131,9 @@ public class ChatServerTest {
 		ChatServer server = new ChatServer();
 		ChatUser user = mock(ChatUser.class);
 		assertTrue(server.addUserIfUnique(user));
-		assertTrue(server.listUsers().size() == 1);
+		assertTrue(server.listUsersInServer().size() == 1);
 		server.removeUser(user);
-		assertTrue(server.listUsers().size() == 0);
+		assertTrue(server.listUsersInServer().size() == 0);
 	}
 	
 	@Test
@@ -173,22 +173,22 @@ public class ChatServerTest {
 		assertTrue(server.addUserIfUnique(user));
 		assertTrue(server.addUserToRoom(user, ROOM_NAME + " 2"));
 		
-		assertTrue(server.listUsers().size() == 1);
+		assertTrue(server.listUsersInServer().size() == 1);
 		server.removeUser(user);
-		assertTrue(server.listUsers().size() == 0);
-		assertTrue(server.listUsersInRoom(ROOM_NAME + " 2") == null);
+		assertTrue(server.listUsersInServer().size() == 0);
+		assertFalse(server.containsRoom(ROOM_NAME + " 2"));
 		server.createRoomIfUnique(ROOM_NAME + " 2", ChatRoomType.PUBLIC);
 		
 		assertTrue(server.addUserIfUnique(user));
 		assertTrue(server.addUserToRoom(user, ROOM_NAME + " 1"));
 		assertTrue(server.addUserToRoom(user, ROOM_NAME + " 2"));
-		assertTrue(server.listUsers().size() == 1);
-		assertTrue(server.listUsersInRoom(ROOM_NAME + " 1").size() == 1);
-		assertTrue(server.listUsersInRoom(ROOM_NAME + " 2").size() == 1);
+		assertTrue(server.listUsersInServer().size() == 1);
+		assertTrue(server.roomSize(ROOM_NAME + " 1") == 1);
+		assertTrue(server.roomSize(ROOM_NAME + " 2") == 1);
 		assertFalse(server.removeUserFromRoom(user, ROOM_NAME));
 		assertTrue(server.removeUserFromRoom(user, ROOM_NAME + " 1"));
-		assertTrue(server.listUsersInRoom(ROOM_NAME + " 1").size() == 0);
-		assertTrue(server.listUsersInRoom(ROOM_NAME + " 2").size() == 1);
+		assertTrue(server.roomSize(ROOM_NAME + " 1") == 0);
+		assertTrue(server.roomSize(ROOM_NAME + " 2") == 1);
 	}
 	
 	@Test
@@ -218,17 +218,17 @@ public class ChatServerTest {
 		
 		assertTrue(message.getAuthor() == user);
 
-		assertTrue(server.listUsersInRoom(ROOM_NAME) == null);
+		assertFalse(server.containsRoom(ROOM_NAME));
 
 		String expected = "";
 		String response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
-		assertFalse(server.listUsersInRoom(ROOM_NAME).isEmpty());
+		assertFalse(server.roomSize(ROOM_NAME) == 0);
 		
 		expected = MessageType.RESPONSE_JOIN_NOT_VALID.getMessageTypeAsString().replace("<message>", ROOM_NAME);
 		response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
-		assertTrue(server.listUsersInRoom(ROOM_NAME).size() == 1);
+		assertTrue(server.roomSize(ROOM_NAME) == 1);
 	}
 	
 	@Test
@@ -249,17 +249,17 @@ public class ChatServerTest {
 		String expected = MessageType.RESPONSE_LEAVE_NOT_VALID.getMessageTypeAsString().replace("<message>", ROOM_NAME);
 		String response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
-		assertTrue(server.listUsersInRoom(ROOM_NAME) == null);
+		assertFalse(server.containsRoom(ROOM_NAME));
 
 		assertTrue(server.addUserIfUnique(user));
 		server.createRoomIfUnique(ROOM_NAME, ChatRoomType.PUBLIC);
 		assertTrue(server.addUserToRoom(user, ROOM_NAME));
-		assertFalse(server.listUsersInRoom(ROOM_NAME).isEmpty());
+		assertFalse(server.roomSize(ROOM_NAME) == 0);
 		
 		expected = MessageType.RESPONSE_LEAVE_OK.getMessageTypeAsString().replace("<message>", ROOM_NAME);
 		response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
-		assertTrue(server.listUsersInRoom(ROOM_NAME) == null);
+		assertFalse(server.containsRoom(ROOM_NAME));
 	}
 
 	@Test
@@ -374,28 +374,28 @@ public class ChatServerTest {
 		String response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
 		
-		assertFalse(server.listUsers().isEmpty());
+		assertFalse(server.listUsersInServer().isEmpty());
 		
 		QuitMessage quitMessage = mock(QuitMessage.class);
 		when(quitMessage.getClientConnection()).thenReturn(connection);
 		when(quitMessage.getAuthor()).thenReturn(message.getAuthor());
 		
 		response = server.handleMessage(connection, quitMessage);
-		assertTrue(server.listUsers().isEmpty());
+		assertTrue(server.listUsersInServer().isEmpty());
 		assertTrue(response.isEmpty());
 	}
 	
 	@Test
 	public void ChatServerListUsersInRoomTest() {
 		ChatServer server = new ChatServer();
-		assertTrue(server.listUsersInRoom(ROOM_NAME) == null);
+		assertFalse(server.containsRoom(ROOM_NAME));
 		server.createRoomIfUnique(ROOM_NAME, ChatRoomType.PUBLIC);
-		assertTrue(server.listUsersInRoom(ROOM_NAME).isEmpty());
+		assertTrue(server.roomSize(ROOM_NAME) == 0);
 		SimpleChatUser user = mock(SimpleChatUser.class);
 		assertTrue(server.addUserToRoom(user, ROOM_NAME));
 
 		exception.expect(NullPointerException.class);
 		exception.expectMessage("Room name was null.");
-		server.listUsersInRoom(null);
+		server.containsRoom(null);
 	}
 }

@@ -50,7 +50,7 @@ public class ChatRoomTest {
 	@Test
 	public void ChatRoomGetUsersTest() {
 		ChatRoom room = new ChatRoom(NAME, ChatRoomType.PUBLIC);
-		assertTrue(room.getUsers().size() == 0);
+		assertTrue(room.isEmpty());
 	}
 	
 	@Test
@@ -58,7 +58,7 @@ public class ChatRoomTest {
 		ChatRoom room = new ChatRoom(NAME, ChatRoomType.PUBLIC);
 		ChatUser user = mock(ChatUser.class);
 		assertTrue(room.addUserIfUnique(user));
-		assertTrue(room.getUsers().size() == 1);
+		assertFalse(room.isEmpty());
 	}
 	
 	@Test
@@ -83,9 +83,9 @@ public class ChatRoomTest {
 		ChatRoom room = new ChatRoom(NAME, ChatRoomType.PUBLIC);
 		ChatUser user = mock(ChatUser.class);
 		assertTrue(room.addUserIfUnique(user));
-		assertTrue(room.getUsers().size() == 1);
+		assertFalse(room.isEmpty());
 		assertTrue(room.removeUserIfExists(user));
-		assertTrue(room.getUsers().size() == 0);
+		assertTrue(room.isEmpty());
 	}
 
 	@Test

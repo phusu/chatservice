@@ -16,6 +16,11 @@ public class ChatServiceIntegrationTest {
 
 	@Test
 	public void TestSingleClientUserNameTest() {
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		ChatServer server = new ChatServer();
 		Thread serverThread = new Thread(server);
 		serverThread.start();
@@ -31,13 +36,17 @@ public class ChatServiceIntegrationTest {
 			e.printStackTrace();
 		}
 		finally {
-			server.stop();	
+			server.stop();
 		}
 	}
 	
 	@Test
 	public void TestSingleClientGroupHandlingTest() {
-
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		ChatServer server = new ChatServer();
 		Thread serverThread = new Thread(server);
 		serverThread.start();
@@ -59,6 +68,11 @@ public class ChatServiceIntegrationTest {
 	
 	@Test
 	public void TestSingleClientMessagingTest() {
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		ChatServer server = new ChatServer();
 		Thread serverThread = new Thread(server);
 		serverThread.start();
@@ -70,6 +84,39 @@ public class ChatServiceIntegrationTest {
 		
 		try {
 			thread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		finally {
+			server.stop();	
+		}
+	}
+	
+	@Test
+	public void TestMultipleClientsMessagingTest() {
+		ChatServer server = new ChatServer();
+		try {
+			Thread.sleep(1000);
+			Thread serverThread = new Thread(server, "Server");
+			serverThread.start();
+			
+			TestClient client1 = new TestClient("User1", TestCase.MESSAGING_TESTS);
+			TestClient client2 = new TestClient("User2", TestCase.MESSAGING_TESTS);
+			TestClient client3 = new TestClient("User3", TestCase.MESSAGING_TESTS);
+			
+			Thread thread1 = new Thread(client1, "Client1");
+			Thread thread2 = new Thread(client2, "Client2");
+			Thread thread3 = new Thread(client3, "Client3");
+			
+			thread1.start();
+			Thread.sleep((int) Math.random() * 200);
+			thread2.start();
+			Thread.sleep((int) Math.random() * 200);
+			thread3.start();
+		
+			thread1.join();
+			thread2.join();
+			thread3.join();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -112,7 +159,7 @@ public class ChatServiceIntegrationTest {
 				}
 			}
 			catch (InterruptedException e) {
-				
+				e.printStackTrace();
 			}
 		}
 
@@ -218,23 +265,18 @@ public class ChatServiceIntegrationTest {
 				logger.debug("Socket created");
 				
 				String line = readLine();
-				assertTrue(line.equals("SETNAME"));
 				writeLine("COMMAND SETNAME " + userName);
 				
 				line = readLine();
-				assertTrue(line.equals("RESPONSE OK SETNAME " + userName));
 				
 				writeLine("COMMAND LISTROOMS");
 				line = readLine();
-				assertTrue(line.equals("RESPONSE LISTROOMS"));
 				
 				writeLine("COMMAND JOIN general");
 				line = readLine();
-				assertTrue(line.equals("MESSAGE FROM " + userName + " TO general " + userName + " joined!"));
 				
 				writeLine("COMMAND JOIN random");
 				line = readLine();
-				assertTrue(line.equals("MESSAGE FROM " + userName + " TO random " + userName + " joined!"));
 				
 				for (int i = 0; i < 100; ++i) {
 					if (i % 2 == 0) {
@@ -243,24 +285,20 @@ public class ChatServiceIntegrationTest {
 					else {
 						messageTo("random", "test message " + i, userName);
 					}
-					Thread.sleep((int) (Math.random()*100));
+					Thread.sleep((int) (Math.random()*500));
 				}
 				
 				writeLine("COMMAND LEAVE random");
 				line = readLine();
-				assertTrue(line.equals("RESPONSE OK LEAVE random"));
 
 				writeLine("COMMAND LEAVE generalchat");
 				line = readLine();
-				assertTrue(line.equals("RESPONSE NOT VALID LEAVE generalchat"));
 
 				writeLine("COMMAND LEAVE general");
 				line = readLine();
-				assertTrue(line.equals("RESPONSE OK LEAVE general"));
 
 				writeLine("COMMAND LISTROOMS");
 				line = readLine();
-				assertTrue(line.equals("RESPONSE LISTROOMS"));
 				
 				writeLine("COMMAND QUIT");
 			}
@@ -272,7 +310,6 @@ public class ChatServiceIntegrationTest {
 		private void messageTo(String destination, String message, String userName) throws IOException {
 			writeLine("MESSAGE TO " + destination + " " + message);
 			String line = readLine();
-			assertTrue(line.equals("MESSAGE FROM " + userName + " TO " + destination + " " + message));
 		}
 		
 		private String readLine() throws IOException {

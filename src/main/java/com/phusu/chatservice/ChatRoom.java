@@ -1,6 +1,5 @@
 package com.phusu.chatservice;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -52,22 +51,51 @@ public class ChatRoom {
 	public String getTopic() {
 		return topic;
 	}
-
-	public Set<ChatUser> getUsers() {
-		return Collections.unmodifiableSet(users);
-	}
 	
 	public boolean addUserIfUnique(ChatUser user) {
 		if (user == null)
 			throw new NullPointerException("User was null.");
 		
-		return users.add(user);
+		boolean wasAdded = false;
+		synchronized (users) {
+			wasAdded = users.add(user);
+		}
+		return wasAdded;
 	}
 	
 	public boolean removeUserIfExists(ChatUser user) {
 		if (user == null)
 			throw new NullPointerException("User was null.");
 		
-		return users.remove(user);
+
+		boolean wasRemoved = false;
+		synchronized (users) {
+			wasRemoved = users.remove(user);
+		}
+		return wasRemoved;
+	}
+
+	public void deliverMessage(String chatMessage) {
+		synchronized (users) {
+			for (ChatUser user : users) {
+				user.getClientConnection().deliverMessage(chatMessage);
+			}
+		}
+	}
+	
+	public boolean isEmpty() {
+		boolean isEmpty = false;
+		synchronized (users) {
+			isEmpty = users.isEmpty();
+		}
+		return isEmpty;
+	}
+	
+	public int size() {
+		int size = 0;
+		synchronized (users) {
+			size = users.size();
+		}
+		return size;
 	}
 }

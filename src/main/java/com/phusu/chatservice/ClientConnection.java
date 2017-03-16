@@ -22,8 +22,8 @@ public class ClientConnection extends Thread {
 	private BufferedReader input;
 	private PrintWriter output;
 	private ChatServer server;
-	private boolean connectionClosed = false;
 	private ChatUser user;
+	private boolean isConnectionClosed = false;
 	
 	public ClientConnection(Socket socket, ChatServer server) {
 		this.socket = socket;
@@ -33,19 +33,20 @@ public class ClientConnection extends Thread {
 	public void deliverMessage(String message) {
 		sendLine(message);
 	}
-
-	public void closeConnection() {
-		if (!connectionClosed) {
-			logger.trace("Closing connection");
-			
-			try {
-				socket.close();
-				connectionClosed = true;
-			}
-			catch (IOException e) {
-				logger.catching(e);
-			}	
+	
+	public synchronized void closeConnection() {
+		logger.trace("Closing connection");
+		isConnectionClosed = true;	
+		
+		try {
+			socket.close();
+		} catch (IOException e) {
+			logger.catching(e);
 		}
+	}
+	
+	private synchronized boolean isConnectionClosed() {
+		return isConnectionClosed;
 	}
 
 	public void setUser(ChatUser user) {
@@ -67,9 +68,6 @@ public class ClientConnection extends Thread {
 		}
 		catch (NullPointerException e) {
 			logger.catching(e);
-		}
-		finally {
-			closeConnection();
 		}
 	}
 	
@@ -101,7 +99,7 @@ public class ClientConnection extends Thread {
 	}
 
 	private void processMessageLoop() throws IOException {
-		while (!connectionClosed) {
+		while (!isConnectionClosed()) {
 			try {
 				ChatMessage message = getMessage();
 				String response = server.handleMessage(this, message);
