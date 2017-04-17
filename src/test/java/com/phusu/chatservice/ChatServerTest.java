@@ -340,9 +340,6 @@ public class ChatServerTest {
 		
 		assertTrue(message.getAuthor() == user);
 		
-		String expected = MessageType.RESPONSE_MESSAGE_FROM.getMessageTypeAsString().replace("<from>", 
-				message.getAuthor().getName()).replace("<to>", message.getRoomName()).replace("<message>", 
-				message.getMessage());
 		String response = server.handleMessage(connection, message);
 		assertTrue(response.isEmpty());
 		

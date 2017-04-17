@@ -264,19 +264,19 @@ public class ChatServiceIntegrationTest {
 				
 				logger.debug("Socket created");
 				
-				String line = readLine();
+				readLine();
 				writeLine("COMMAND SETNAME " + userName);
 				
-				line = readLine();
+				readLine();
 				
 				writeLine("COMMAND LISTROOMS");
-				line = readLine();
+				readLine();
 				
 				writeLine("COMMAND JOIN general");
-				line = readLine();
+				readLine();
 				
 				writeLine("COMMAND JOIN random");
-				line = readLine();
+				readLine();
 				
 				for (int i = 0; i < 100; ++i) {
 					if (i % 2 == 0) {
@@ -289,16 +289,16 @@ public class ChatServiceIntegrationTest {
 				}
 				
 				writeLine("COMMAND LEAVE random");
-				line = readLine();
+				readLine();
 
 				writeLine("COMMAND LEAVE generalchat");
-				line = readLine();
+				readLine();
 
 				writeLine("COMMAND LEAVE general");
-				line = readLine();
+				readLine();
 
 				writeLine("COMMAND LISTROOMS");
-				line = readLine();
+				readLine();
 				
 				writeLine("COMMAND QUIT");
 			}
@@ -309,7 +309,7 @@ public class ChatServiceIntegrationTest {
 
 		private void messageTo(String destination, String message, String userName) throws IOException {
 			writeLine("MESSAGE TO " + destination + " " + message);
-			String line = readLine();
+			readLine();
 		}
 		
 		private String readLine() throws IOException {
