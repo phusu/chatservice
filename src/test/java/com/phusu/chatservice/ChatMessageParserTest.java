@@ -12,7 +12,6 @@ import com.phusu.chatservice.messages.JoinRoomMessage;
 import com.phusu.chatservice.messages.LeaveRoomMessage;
 import com.phusu.chatservice.messages.ListRoomsMessage;
 import com.phusu.chatservice.messages.MessageType;
-import com.phusu.chatservice.messages.QuitMessage;
 import com.phusu.chatservice.messages.SetNameMessage;
 import com.phusu.chatservice.messages.TextMessage;
 import com.phusu.chatservice.messages.UnknownMessage;
@@ -139,16 +138,6 @@ public class ChatMessageParserTest {
 		ListRoomsMessage msg = (ListRoomsMessage) message;
 		assertTrue("Expected " + MessageType.COMMAND_LISTROOMS + ", was " + msg.getMessageType(), 
 				msg.getMessageType().equals(MessageType.COMMAND_LISTROOMS));
-	}
-	
-
-	@Test
-	public void ChatMessageParserParseQuitTest() throws ChatMessageParseException {
-		ChatMessage message = ChatMessageParser.parseLine(MessageType.COMMAND_QUIT.getMessageTypeAsString());
-		assertTrue(message instanceof QuitMessage);
-		QuitMessage msg = (QuitMessage) message;
-		assertTrue("Expected " + MessageType.COMMAND_QUIT + ", was " + msg.getMessageType(), 
-				msg.getMessageType().equals(MessageType.COMMAND_QUIT));
 	}
 	
 	@Test

@@ -1,8 +1,6 @@
 package com.phusu.chatservice;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,6 +11,9 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.java_websocket.WebSocket;
+import org.java_websocket.handshake.ClientHandshake;
+import org.java_websocket.server.WebSocketServer;
 
 import com.phusu.chatservice.messagehandlers.*;
 import com.phusu.chatservice.messages.ChatMessage;
@@ -30,31 +31,28 @@ import com.phusu.chatservice.messages.TextMessage;
  * COMMAND JOIN roomname					| <RESPONSE OK JOIN roomname> or <RESPONSE NOT EXIST JOIN roomname>
  * COMMAND LEAVE roomname					| <RESPONSE OK LEAVE roomname> or <RESPONSE NOT EXIST LEAVE roomname>
  * COMMAND LISTROOMS						| <RESPONSE LISTROOMS room1 room2 room3 ... roomn>
- * COMMAND QUIT								| no response
  *  
  */
-public class ChatServer implements Runnable {
+public class ChatServer extends WebSocketServer {
 	private Map<String, ChatRoom> chatRooms;
 	private Set<ChatUser> users;
-	private Collection<ClientConnection> connections;
+	private Map<InetSocketAddress, ClientConnection> connections;
 	private Set<String> publicRoomNames;
 	private Collection<IChatMessageHandler> messageHandlers;
 	
 	private static final Logger logger = LogManager.getLogger(ChatServer.class);
 	
 	private final static int PORT = 9001;
-	private ServerSocket serverSocket;
-	private boolean serverIsRunning = false;
 	
 	public ChatServer() {
+		super(new InetSocketAddress(PORT));
 		logger.trace("ChatServer created");
 		this.chatRooms = new HashMap<String, ChatRoom>();
 		this.users = new HashSet<ChatUser>();
-		this.connections = Collections.synchronizedList(new ArrayList<ClientConnection>());
+		this.connections = new HashMap<>();
 		this.publicRoomNames = new HashSet<String>();
 		this.messageHandlers = new ArrayList<IChatMessageHandler>();
 		this.messageHandlers.add(new TextMessageHandler(this));
-		this.messageHandlers.add(new QuitMessageHandler(this));
 		this.messageHandlers.add(new SetNameMessageHandler(this));
 		this.messageHandlers.add(new JoinRoomMessageHandler(this));
 		this.messageHandlers.add(new LeaveRoomMessageHandler(this));
@@ -193,26 +191,6 @@ public class ChatServer implements Runnable {
 		}
 	}
 	
-	private void addConnection(ClientConnection connection) {
-		if (connection == null)
-			throw new NullPointerException("Connection was null.");
-		
-		synchronized (connections) {
-			connections.add(connection);
-			logger.trace("Connection added.");
-		}
-	}
-	
-	public void removeConnection(ClientConnection connection) {
-		if (connection == null)
-			throw new NullPointerException("Connection was null.");		
-		
-		synchronized (connections) {
-			connections.remove(connection);
-			logger.trace("Connection removed.");
-		}
-	}
-	
 	public String handleMessage(ClientConnection connection, ChatMessage message) {
 		for (IChatMessageHandler handler : messageHandlers) {
 			ChatServerResponse response = handler.handleMessage(message);
@@ -264,42 +242,48 @@ public class ChatServer implements Runnable {
 		}
 	}
 	
-	public void run() {
-		logger.trace("ChatServer started");
-		serverIsRunning = true;
+	@Override
+	public void onClose(WebSocket conn, int code, String reason, boolean remote) {
+		logger.info("Closing connection: " + conn.getRemoteSocketAddress().toString());
+		// Get connection
+		ClientConnection clientConnection = connections.get(conn.getRemoteSocketAddress());
+		if (clientConnection != null) {
+			removeUser(clientConnection.getUser());
+			connections.remove(conn.getRemoteSocketAddress());
+		}
+	}
+	
+	@Override
+	public void onError(WebSocket conn, Exception ex) {
+		logger.catching(ex);
+	}
+	
+	@Override
+	public void onMessage(WebSocket conn, String message) {
+		// Get connection
+		ClientConnection clientConnection = connections.get(conn.getRemoteSocketAddress());
+		if (clientConnection != null) {
+			clientConnection.handleMessage(message);
+		}
+	}
+	
+	@Override
+	public void onStart() {
+		logger.info("Server started");
+	}
+	
+	@Override
+	public void onOpen(WebSocket conn, ClientHandshake handshake) {
+		logger.info("New connection from: " + conn.getRemoteSocketAddress().toString());
+		ClientConnection clientConnection = new ClientConnection(conn, this);
+		connections.put(conn.getRemoteSocketAddress(), clientConnection);
 		
-		try {
-			serverSocket = new ServerSocket(PORT);
-			while (serverIsRunning) {
-				Socket socket = serverSocket.accept();
-				ClientConnection connection = new ClientConnection(socket, this);
-				addConnection(connection);
-				connection.start();
-			}
-			serverSocket.close();
-		} 
-		catch (IOException e) {
-			//logger.catching(e);
-		}
-		finally {
-			try {
-				if (serverSocket != null) {
-					serverSocket.close();
-				}
-			} catch (IOException e) {
-			}
-			logger.trace("ChatServer stopped");
-		}
+		// Request username for each new connection
+		conn.send("SETNAME");
 	}
-	
-	public void stop() {
-		logger.trace("ChatServer stopping");
-		serverIsRunning = false;
-	}
-	
+		
 	public static void main(String[] args) {
 		ChatServer server = new ChatServer();
-		Thread serverThread = new Thread(server, "server");
-		serverThread.start();
+		server.start();
 	}
 }

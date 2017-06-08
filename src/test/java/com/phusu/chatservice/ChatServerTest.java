@@ -11,7 +11,6 @@ import com.phusu.chatservice.messages.JoinRoomMessage;
 import com.phusu.chatservice.messages.LeaveRoomMessage;
 import com.phusu.chatservice.messages.ListRoomsMessage;
 import com.phusu.chatservice.messages.MessageType;
-import com.phusu.chatservice.messages.QuitMessage;
 import com.phusu.chatservice.messages.SetNameMessage;
 import com.phusu.chatservice.messages.TextMessage;
 import com.phusu.chatservice.messages.UnknownMessage;
@@ -357,29 +356,6 @@ public class ChatServerTest {
 		String expected = MessageType.UNKNOWN.getMessageTypeAsString();
 		String response = server.handleMessage(connection, message);
 		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
-	}
-	
-	@Test
-	public void ChatServerHandleQuitMessageTest() {
-		ChatServer server = new ChatServer();
-		ClientConnection connection = mock(ClientConnection.class);
-		
-		SetNameMessage message = new SetNameMessage(USER_NAME_FOO);
-		message.setClientConnection(connection);
-		
-		String expected = MessageType.RESPONSE_SETNAME_OK.getMessageTypeAsString().replace("<name>", message.getUserName());
-		String response = server.handleMessage(connection, message);
-		assertTrue("Expected " + expected + ", got: " + response, response.compareTo(expected) == 0);
-		
-		assertFalse(server.listUsersInServer().isEmpty());
-		
-		QuitMessage quitMessage = mock(QuitMessage.class);
-		when(quitMessage.getClientConnection()).thenReturn(connection);
-		when(quitMessage.getAuthor()).thenReturn(message.getAuthor());
-		
-		response = server.handleMessage(connection, quitMessage);
-		assertTrue(server.listUsersInServer().isEmpty());
-		assertTrue(response.isEmpty());
 	}
 	
 	@Test

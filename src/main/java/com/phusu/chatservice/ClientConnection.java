@@ -1,13 +1,8 @@
 package com.phusu.chatservice;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.java_websocket.WebSocket;
 
 import com.phusu.chatservice.messages.ChatMessage;
 import com.phusu.chatservice.messages.SetNameMessage;
@@ -15,17 +10,14 @@ import com.phusu.chatservice.messages.SetNameMessage;
 /**
  * ClientConnection 
  */
-public class ClientConnection extends Thread {
+public class ClientConnection {
 	private static final Logger logger = LogManager.getLogger(ClientConnection.class);
 	
-	private Socket socket;
-	private BufferedReader input;
-	private PrintWriter output;
+	private WebSocket socket;
 	private ChatServer server;
 	private ChatUser user;
-	private boolean isConnectionClosed = false;
 	
-	public ClientConnection(Socket socket, ChatServer server) {
+	public ClientConnection(WebSocket socket, ChatServer server) {
 		this.socket = socket;
 		this.server = server;
 	}
@@ -36,90 +28,54 @@ public class ClientConnection extends Thread {
 	
 	public synchronized void closeConnection() {
 		logger.trace("Closing connection");
-		isConnectionClosed = true;	
-		
-		try {
-			socket.close();
-		} catch (IOException e) {
-			logger.catching(e);
-		}
+		socket.close();
 	}
 	
-	private synchronized boolean isConnectionClosed() {
-		return isConnectionClosed;
-	}
-
 	public void setUser(ChatUser user) {
 		this.user = user;
 	}
 	
-	@Override
-	public void run() {
-		try {
-			input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			output = new PrintWriter(socket.getOutputStream(), true);
-			
-			getValidUserName();
-			processMessageLoop();
-			
-		}
-		catch (IOException e) {
-			logger.catching(e);
-		}
-		catch (NullPointerException e) {
-			logger.catching(e);
-		}
-	}
-	
-	private void getValidUserName() throws IOException {
-		boolean userNameIsValid = false;
-		while (!userNameIsValid) {
-			sendLine("SETNAME");
-			ChatMessage message;
-			try {
-				message = getMessage();
-			}
-			catch (ChatMessageParseException e) {
-				continue;
-			}
-			if (message instanceof SetNameMessage) {
-				message.setClientConnection(this);
-				String response = server.handleMessage(this, message);
-				sendLine(response);
-				if (this.user != null) {
-					userNameIsValid = true;	
-				}
-			}
-		}
+	public ChatUser getUser() {
+		return user;
 	}
 	
 	private void sendLine(String line) {
-		output.println(line);
+		socket.send(line);
 		logger.info(line);
 	}
 
-	private void processMessageLoop() throws IOException {
-		while (!isConnectionClosed()) {
-			try {
-				ChatMessage message = getMessage();
-				String response = server.handleMessage(this, message);
-				if (!response.isEmpty()) {
-					sendLine(response);
-				}
-			}
-			catch (ChatMessageParseException e) {
-				String response = e.getMessageType().getMessageTypeAsString().replace("<message>", e.getMessage());
-				sendLine(response);
-			}
-		}
-	}
-
-	private ChatMessage getMessage() throws IOException, ChatMessageParseException {
-		String line = input.readLine();
+	private ChatMessage getMessage(String line) throws ChatMessageParseException {
 		logger.info(line);
 		ChatMessage message = ChatMessageParser.parseLine(line); 
 		message.setClientConnection(this);
 		message.setAuthor(user);
 		return message;
+	}
+	
+	public void handleMessage(String msg) {
+		try {
+			ChatMessage message = getMessage(msg);
+			if (this.user != null) {
+				String response = server.handleMessage(this, message);
+				if (!response.isEmpty()) {
+					sendLine(response);
+				}
+			}
+			else {
+				if (message instanceof SetNameMessage) {
+					String response = server.handleMessage(this, message);
+					if (!response.isEmpty()) {
+						sendLine(response);
+					}
+				}
+				else {
+					sendLine("SETNAME");
+				}
+			}
+		}
+		catch (ChatMessageParseException e) {
+			String response = e.getMessageType().getMessageTypeAsString().replace("<message>", e.getMessage());
+			sendLine(response);
+		}
 	}
 }

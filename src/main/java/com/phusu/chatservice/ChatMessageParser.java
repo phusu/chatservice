@@ -5,7 +5,6 @@ import com.phusu.chatservice.messages.JoinRoomMessage;
 import com.phusu.chatservice.messages.LeaveRoomMessage;
 import com.phusu.chatservice.messages.ListRoomsMessage;
 import com.phusu.chatservice.messages.MessageType;
-import com.phusu.chatservice.messages.QuitMessage;
 import com.phusu.chatservice.messages.SetNameMessage;
 import com.phusu.chatservice.messages.TextMessage;
 import com.phusu.chatservice.messages.UnknownMessage;
@@ -32,9 +31,6 @@ public class ChatMessageParser {
 		}
 		else if (line.startsWith(MessageType.COMMAND_LISTROOMS.getMessageTypeAsString())) {
 			return new ListRoomsMessage();
-		}
-		else if (line.startsWith(MessageType.COMMAND_QUIT.getMessageTypeAsString())) {
-			return new QuitMessage();
 		}
 		
 		return new UnknownMessage();
