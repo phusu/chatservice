@@ -83,7 +83,7 @@ public class ChatServiceIntegrationTest {
 		}
 	}
 	
-	/*
+	
 	@Test
 	public void TestSingleClientMessagingTest() {
 		try {
@@ -93,19 +93,30 @@ public class ChatServiceIntegrationTest {
 		}
 		ChatServer server = new ChatServer();
 		server.start();
-		
-		TestClient client = new TestClient("User", TestCase.MESSAGING_TESTS);
-		
-		Thread thread = new Thread(client, "Client");
-		thread.start();
-		
+
 		try {
+			TestClient client = new TestClient("User", TestCase.MESSAGING_TESTS);
+			
+			Thread thread = new Thread(client, "Client");
+			thread.start();
+		
 			thread.join();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();	
+		} finally {
+			try {
+				server.stop();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
+	/*
 	@Test
 	public void TestMultipleClientsMessagingTest() {
 		ChatServer server = new ChatServer();
@@ -162,7 +173,8 @@ public class ChatServiceIntegrationTest {
 		TEST_GROUP_LEAVE_RANDOM_SENT,
 		TEST_GROUP_LEAVE_GENERAL_SENT,
 		TEST_GROUP_LEAVE_INVALID_CHANNEL_SENT,
-		TEST_GROUP_TEST_COMPLETED
+		TEST_GROUP_TEST_COMPLETED,
+		MESSAGING_TESTS
 	}
 	
 	private class TestClient implements Runnable {
@@ -180,7 +192,9 @@ public class ChatServiceIntegrationTest {
 				this.state = ClientState.TEST_USER_WAIT_SETNAME;
 			else if (testCase == TestCase.GROUP_HANDLING_TESTS)
 				this.state = ClientState.TEST_GROUP_WAIT_SETNAME;
-			
+			else
+				this.state = ClientState.MESSAGING_TESTS;
+						
 			this.cc = new WebSocketClient(new URI("http://localhost:9001"), new Draft_6455()) {
 				@Override
 				public void onMessage(String message) {
@@ -290,6 +304,7 @@ public class ChatServiceIntegrationTest {
 							break;
 						}
 					default:
+						logger.info("Got message: " + message);
 						break;
 					}
 				}
@@ -320,11 +335,9 @@ public class ChatServiceIntegrationTest {
 				else if (testCase == TestCase.GROUP_HANDLING_TESTS) {
 					testCreatingGroupsAndMessaging(clientName);
 				}
-				/*
 				else if (testCase == TestCase.MESSAGING_TESTS) {
 					testMessagingToMultipleGroups(clientName);
 				}
-				*/
 		}
 
 		private void testSettingUserName(String clientName) {
@@ -356,56 +369,38 @@ public class ChatServiceIntegrationTest {
 			logger.debug("Test ready.");
 		}
 		
-		/*
-		private void testMessagingToMultipleGroups(String userName) throws InterruptedException {
-			try (Socket socket = new Socket("localhost", 9001)) {
-				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				out = new PrintWriter(socket.getOutputStream(), true);
-				
-				logger.debug("Socket created");
-				
-				readLine();
-				writeLine("COMMAND SETNAME " + userName);
-				
-				readLine();
-				
-				writeLine("COMMAND LISTROOMS");
-				readLine();
-				
-				writeLine("COMMAND JOIN general");
-				readLine();
-				
-				writeLine("COMMAND JOIN random");
-				readLine();
-				
-				for (int i = 0; i < 100; ++i) {
-					if (i % 2 == 0) {
-						messageTo("general", "test message " + i, userName);
-					}
-					else {
-						messageTo("random", "test message " + i, userName);
-					}
-					Thread.sleep((int) (Math.random()*500));
+		
+		private void testMessagingToMultipleGroups(String userName) {
+			try {
+				cc.connectBlocking();
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			logger.debug("Socket created");
+			
+			cc.send("COMMAND SETNAME " + userName);
+			cc.send("COMMAND LISTROOMS");
+			cc.send("COMMAND JOIN general");
+			
+			cc.send("COMMAND JOIN random");
+			for (int i = 0; i < 100; ++i) {
+				if (i % 2 == 0) {
+					cc.send("MESSAGE TO general test message from " + userName);
 				}
-				
-				writeLine("COMMAND LEAVE random");
-				readLine();
-
-				writeLine("COMMAND LEAVE generalchat");
-				readLine();
-
-				writeLine("COMMAND LEAVE general");
-				readLine();
-
-				writeLine("COMMAND LISTROOMS");
-				readLine();
-				
-				writeLine("COMMAND QUIT");
+				else {
+					cc.send("MESSAGE TO random test message from " + userName);
+				}
+				try {
+					Thread.sleep((int) (Math.random()*500));
+				} catch (InterruptedException e) {
+				}
 			}
-			catch (IOException e) {
-				e.printStackTrace();
-			}
+			cc.send("COMMAND LEAVE random");
+			cc.send("COMMAND LEAVE generalchat");
+			cc.send("COMMAND LEAVE general");
+			cc.send("COMMAND LISTROOMS");
+			cc.close();
 		}
-		*/
+		
 	}
 }
