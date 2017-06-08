@@ -116,14 +116,18 @@ public class ChatServiceIntegrationTest {
 		}
 	}
 	
-	/*
 	@Test
 	public void TestMultipleClientsMessagingTest() {
-		ChatServer server = new ChatServer();
 		try {
 			Thread.sleep(1000);
-			server.start();
-			
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		ChatServer server = new ChatServer();
+		server.start();
+
+		
+		try {
 			TestClient client1 = new TestClient("User1", TestCase.MESSAGING_TESTS);
 			TestClient client2 = new TestClient("User2", TestCase.MESSAGING_TESTS);
 			TestClient client3 = new TestClient("User3", TestCase.MESSAGING_TESTS);
@@ -143,9 +147,18 @@ public class ChatServiceIntegrationTest {
 			thread3.join();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();	
+		} finally {
+			try {
+				server.stop();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
-	*/
 	
 	enum TestCase {
 		USER_NAME_TESTS,

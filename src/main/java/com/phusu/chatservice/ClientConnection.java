@@ -40,8 +40,10 @@ public class ClientConnection {
 	}
 	
 	private void sendLine(String line) {
-		socket.send(line);
-		logger.info(line);
+		if (socket.isOpen()) {
+			socket.send(line);
+			logger.info(line);
+		}
 	}
 
 	private ChatMessage getMessage(String line) throws ChatMessageParseException {
