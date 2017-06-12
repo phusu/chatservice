@@ -6,7 +6,7 @@ Motivation for the project was to try to follow Clean Code principles after I re
 
 Client implementation is not done, it will follow up later. That might also incur some changes and fixes to server code base.
 
-Updated on June 2017: Implementation modified to use WebSockets. This makes client implementation a lot easier and client can be written with HTML & Javascript.
+Updated on June 2017: Implementation modified to use WebSockets. This makes client implementation a lot easier and client can be written with HTML & Javascript. Using a separate WebSockets library rather than switching the whole setup to use Java EE.
 
 ## Implementation details
 Chat server listens incoming WebSocket connections on port 9001. For each new connection (user), a separate connection thread is spawned which handles communication with remote user. Commands are just plain text.
