@@ -384,13 +384,15 @@ public class ChatServiceIntegrationTest {
 		
 		
 		private void testMessagingToMultipleGroups(String userName) {
-			try {
-				cc.connectBlocking();
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
+			cc.connect();
 			logger.debug("Socket created");
 			
+			while (!cc.isOpen()) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+				}
+			}
 			cc.send("COMMAND SETNAME " + userName);
 			cc.send("COMMAND LISTROOMS");
 			cc.send("COMMAND JOIN general");
@@ -404,7 +406,7 @@ public class ChatServiceIntegrationTest {
 					cc.send("MESSAGE TO random test message from " + userName);
 				}
 				try {
-					Thread.sleep((int) (Math.random()*500));
+					Thread.sleep((int) (Math.random()*1000));
 				} catch (InterruptedException e) {
 				}
 			}
