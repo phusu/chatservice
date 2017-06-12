@@ -245,11 +245,13 @@ public class ChatServer extends WebSocketServer {
 	@Override
 	public void onClose(WebSocket conn, int code, String reason, boolean remote) {
 		logger.info("Closing connection: " + conn.getRemoteSocketAddress().toString());
-		// Get connection
-		ClientConnection clientConnection = connections.get(conn.getRemoteSocketAddress());
-		if (clientConnection != null) {
-			removeUser(clientConnection.getUser());
-			connections.remove(conn.getRemoteSocketAddress());
+		ClientConnection clientConnection = null;
+		synchronized (connections) {
+			clientConnection = connections.get(conn.getRemoteSocketAddress());
+			if (clientConnection != null) {
+				removeUser(clientConnection.getUser());
+				connections.remove(conn.getRemoteSocketAddress());
+			}
 		}
 	}
 	
@@ -260,8 +262,10 @@ public class ChatServer extends WebSocketServer {
 	
 	@Override
 	public void onMessage(WebSocket conn, String message) {
-		// Get connection
-		ClientConnection clientConnection = connections.get(conn.getRemoteSocketAddress());
+		ClientConnection clientConnection = null;
+		synchronized (connections) {
+			clientConnection = connections.get(conn.getRemoteSocketAddress());	
+		}
 		if (clientConnection != null) {
 			clientConnection.handleMessage(message);
 		}
@@ -276,8 +280,9 @@ public class ChatServer extends WebSocketServer {
 	public void onOpen(WebSocket conn, ClientHandshake handshake) {
 		logger.info("New connection from: " + conn.getRemoteSocketAddress().toString());
 		ClientConnection clientConnection = new ClientConnection(conn, this);
-		connections.put(conn.getRemoteSocketAddress(), clientConnection);
-		
+		synchronized (connections) {
+			connections.put(conn.getRemoteSocketAddress(), clientConnection);
+		}
 		// Request username for each new connection
 		conn.send("SETNAME");
 	}
